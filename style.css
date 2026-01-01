@@ -1,99 +1,77 @@
-*{margin:0;padding:0;box-sizing:border-box;font-family:Arial}
-
-body{background:#fff3e0}
-
-header{
-  background:linear-gradient(135deg,#b71c1c,#ff9800);
-  color:#fff;
-  text-align:center;
-  padding:20px
+body {
+  margin:0;
+  font-family: Arial, sans-serif;
+  background:#f7f7f7;
 }
 
-section{padding:20px}
-
-h2{color:#b71c1c;margin-bottom:12px}
-
-.promo,.avaliacoes,.montar{
+.header {
   background:#fff;
-  border-radius:16px;
-  margin:15px;
-  padding:20px;
-  box-shadow:0 6px 16px rgba(0,0,0,.2)
-}
-
-.oferta{font-size:1.3rem;font-weight:bold}
-
-.precos .antes{text-decoration:line-through;color:#999}
-.precos .agora{color:#2e7d32;font-size:1.4rem;font-weight:bold}
-
-.contador{
-  background:#ffebee;
-  padding:10px;
-  border-radius:10px;
-  margin:10px 0;
-  font-weight:bold;
-  color:#c62828
-}
-
-.card{
-  background:#fff;
-  border-radius:14px;
-  overflow:hidden;
-  margin-bottom:15px;
-  box-shadow:0 4px 12px rgba(0,0,0,.25)
-}
-
-.card img{width:100%;height:200px;object-fit:cover}
-
-.card h3{padding:10px}
-.card p{padding:0 10px 10px;color:#2e7d32;font-weight:bold}
-
-.destaque{border:4px solid #ff9800}
-
-.opcoes{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-
-select,button{
-  width:100%;
-  padding:12px;
-  border-radius:12px;
-  margin-top:10px
-}
-
-button{
-  background:#b71c1c;
-  color:#fff;
-  font-weight:bold;
-  border:none;
-  font-size:1.1rem
-}
-
-footer{
-  background:#b71c1c;
-  color:#fff;
-  text-align:center;
-  padding:15px
-}
-
-/* PIX */
-#pixModal{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.75);
+  display:flex;
   align-items:center;
-  justify-content:center
+  padding:10px;
+  box-shadow:0 2px 5px rgba(0,0,0,.1);
 }
 
-.pixBox{
+.logo {
+  width:55px;
+  margin-right:10px;
+}
+
+.address {
   background:#fff;
-  padding:20px;
-  border-radius:16px;
-  width:90%;
-  max-width:420px;
-  text-align:center
+  padding:12px;
+  margin:10px;
+  border-radius:8px;
 }
 
-.pixBox img{width:240px;margin:10px auto}
-.pixBox input{width:100%;padding:10px;text-align:center;font-weight:bold}
+.categories {
+  display:flex;
+  overflow-x:auto;
+  background:#fff;
+  padding:10px;
+}
 
-.local{background:#ff9800}
+.categories button {
+  border:none;
+  background:#eee;
+  margin-right:8px;
+  padding:8px 12px;
+  border-radius:20px;
+}
+
+.banner img {
+  width:100%;
+  height:200px;
+  object-fit:cover;
+}
+
+.section {
+  padding:10px;
+}
+
+.product {
+  background:#fff;
+  display:flex;
+  border-radius:10px;
+  margin-bottom:10px;
+  padding:10px;
+}
+
+.product img {
+  width:90px;
+  height:90px;
+  object-fit:cover;
+  border-radius:8px;
+  margin-right:10px;
+}
+
+.cart {
+  position:fixed;
+  bottom:0;
+  width:100%;
+  background:#d32f2f;
+  color:#fff;
+  text-align:center;
+  padding:15px;
+  font-size:18px;
+}

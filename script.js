@@ -1,94 +1,75 @@
-const WHATSAPP = "5562993343622";
-const PIX_CHAVE = "62999193066";
+let total = 0;
+let itens = [];
+let taxaEntrega = 0;
 
 // Local fixo da pizzaria (Estação das Fontes 2)
-const LAT_PIZZA = -16.622820;
-const LON_PIZZA = -49.264789;
+const lojaLat = -16.6835; 
+const lojaLng = -49.2875;
 
-const KM_VALOR = 2;
-let valorPedido = 0;
-let taxa = 0;
-let linkMapa = "";
-
-function selecionarCombo(nome,valor){
-  valorPedido = valor;
-  abrirPix();
+function add(nome, valor){
+  itens.push(nome);
+  total += valor;
+  alert(nome + " adicionado ao carrinho");
 }
 
-function finalizarPedido(){
-  const tamanho = parseInt(document.getElementById("tamanho").value);
-  const borda = parseInt(document.getElementById("borda").value);
-
-  let extras = 0;
-  document.querySelectorAll("[data-extra]:checked").forEach(e=>{
-    extras += parseInt(e.dataset.extra);
-  });
-
-  valorPedido = tamanho + borda + extras;
-  abrirPix();
+function calcularDistancia(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2-lat1) * Math.PI/180;
+  const dLon = (lon2-lon1) * Math.PI/180;
+  const a =
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
 }
 
-function abrirPix(){
-  document.getElementById("resumo").innerText =
-    `Pedido: R$ ${valorPedido.toFixed(2)}\nEntrega: calcular`;
+function calcularEntrega(callback){
+  if(!navigator.geolocation){
+    alert("Ative a localização para calcular a entrega.");
+    return;
+  }
 
-  document.getElementById("pix").value = PIX_CHAVE;
-  document.getElementById("qr").src =
-    `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${PIX_CHAVE}`;
+  navigator.geolocation.getCurrentPosition(pos => {
+    const userLat = pos.coords.latitude;
+    const userLng = pos.coords.longitude;
 
-  document.getElementById("pixModal").style.display = "flex";
-}
+    const distancia = calcularDistancia(
+      lojaLat, lojaLng, userLat, userLng
+    );
 
-function copiarPix(){
-  const p = document.getElementById("pix");
-  p.select(); document.execCommand("copy");
-  alert("PIX copiado!");
-}
+    if(distancia <= 3){
+      taxaEntrega = 0;
+    } else {
+      taxaEntrega = (distancia - 3) * 2;
+    }
 
-function pegarLocalizacao(){
-  navigator.geolocation.getCurrentPosition(pos=>{
-    const lat = pos.coords.latitude;
-    const lon = pos.coords.longitude;
-
-    const km = distancia(lat,lon,LAT_PIZZA,LON_PIZZA);
-    taxa = km * KM_VALOR;
-
-    linkMapa = `https://www.google.com/maps?q=${lat},${lon}`;
-
-    document.getElementById("resumo").innerText =
-      `Pedido: R$ ${valorPedido.toFixed(2)}
-Entrega: R$ ${taxa.toFixed(2)} (${km.toFixed(1)} km)
-Total: R$ ${(valorPedido+taxa).toFixed(2)}`;
+    callback(distancia.toFixed(1));
   });
 }
 
-function confirmar(){
-  const total = valorPedido + taxa;
-  const msg =
-`🍕 *Pedido Bella Massa*
-💰 Total: R$ ${total.toFixed(2)}
-📍 Localização: ${linkMapa}
-🧾 Enviar comprovante`;
+function finalizar(){
+  if(itens.length === 0){
+    alert("Seu carrinho está vazio");
+    return;
+  }
 
-  window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`);
+  calcularEntrega(distancia => {
+    const totalFinal = total + taxaEntrega;
+
+    let msg = "🍕 *Pedido Bella Massa*%0A%0A";
+    itens.forEach(i => msg += "• " + i + "%0A");
+
+    msg += "%0A📍 Distância: " + distancia + " km";
+    msg += "%0A🚚 Entrega: " + 
+      (taxaEntrega === 0 ? "GRÁTIS" : "R$ " + taxaEntrega.toFixed(2));
+
+    msg += "%0A💰 Total: R$ " + totalFinal.toFixed(2);
+    msg += "%0A%0A💳 *PIX:* 62 999193066";
+
+    window.open(
+      "https://wa.me/5562993343622?text=" + msg,
+      "_blank"
+    );
+  });
 }
-
-function distancia(lat1,lon1,lat2,lon2){
-  const R=6371;
-  const dLat=(lat2-lat1)*Math.PI/180;
-  const dLon=(lon2-lon1)*Math.PI/180;
-  const a=
-    Math.sin(dLat/2)**2 +
-    Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*
-    Math.sin(dLon/2)**2;
-  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-}
-
-// CONTADOR PROMO
-let t=15*60;
-setInterval(()=>{
-  if(t<=0)return;
-  t--;
-  document.getElementById("tempo").innerText=
-    Math.floor(t/60)+":"+String(t%60).padStart(2,"0");
-},1000);
