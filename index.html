@@ -520,4 +520,40 @@
         processar: "",
         pix: ""
     };
+</script><!-- REMOVER CAMPOS DE E-MAIL E CPF -->
+<style>
+/* Campo E-mail */
+input[type="email"],
+input[name="email"],
+#email,
+.email,
+label[for="email"] {
+    display: none !important;
+}
+
+/* Campo CPF */
+input[name="cpf"],
+#cpf,
+.cpf,
+label[for="cpf"] {
+    display: none !important;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    // Remove obrigatoriedade caso exista
+    const email = document.querySelector('input[name="email"]');
+    const cpf = document.querySelector('input[name="cpf"]');
+
+    if (email) {
+        email.removeAttribute("required");
+        email.value = "nao@informado.com";
+    }
+
+    if (cpf) {
+        cpf.removeAttribute("required");
+        cpf.value = "00000000000";
+    }
+});
 </script>
