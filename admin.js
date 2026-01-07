@@ -12,7 +12,11 @@ const $ = id => document.getElementById(id);
 // DEFAULT (NORMALIZADO)
 // ==================================================
 const DEFAULT_DATA = {
-  store: { name: "", phone: "" },
+  store: {
+    name: "",
+    phone: "",
+    logo: null
+  },
   categories: [],
   products: [],
   extras: [],
@@ -46,7 +50,7 @@ function logout() {
 // ==================================================
 function normalizeDB(raw = {}) {
   return {
-    store: raw.store || { ...DEFAULT_DATA.store },
+    store: { ...DEFAULT_DATA.store, ...(raw.store || {}) },
     categories: Array.isArray(raw.categories) ? raw.categories : [],
     products: Array.isArray(raw.products) ? raw.products : [],
     extras: Array.isArray(raw.extras) ? raw.extras : [],
@@ -72,8 +76,15 @@ function saveDB(d) {
 // ==================================================
 function loadAdmin() {
   const d = loadDB();
+
   $("storeName").value = d.store.name || "";
   $("storePhone").value = d.store.phone || "";
+
+  if (d.store.logo && $("logoImg")) {
+    $("logoImg").src = d.store.logo;
+    $("logoPreview").style.display = "flex";
+  }
+
   renderCategories();
   renderProducts();
   renderPromo();
@@ -82,14 +93,29 @@ function loadAdmin() {
 window.loadAdmin = loadAdmin;
 
 // ==================================================
-// STORE
+// STORE (COM LOGO)
 // ==================================================
 function saveStore() {
   const d = loadDB();
+
   d.store.name = $("storeName").value.trim();
   d.store.phone = $("storePhone").value.replace(/\D/g, "");
-  saveDB(d);
-  alert("Loja salva");
+
+  const logoInput = $("storeLogo");
+  const file = logoInput?.files?.[0];
+
+  if (file) {
+    const r = new FileReader();
+    r.onload = () => {
+      d.store.logo = r.result;
+      saveDB(d);
+      alert("Loja e logo salvas");
+    };
+    r.readAsDataURL(file);
+  } else {
+    saveDB(d);
+    alert("Loja salva");
+  }
 }
 
 // ==================================================
@@ -100,9 +126,7 @@ function addCategory() {
   const name = $("catName").value.trim();
   if (!name) return;
 
-  if (!d.categories.includes(name)) {
-    d.categories.push(name);
-  }
+  if (!d.categories.includes(name)) d.categories.push(name);
 
   saveDB(d);
   $("catName").value = "";
@@ -114,12 +138,9 @@ function renderCategories() {
 
   $("catList").innerHTML = d.categories.map((c, i) => `
     <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
-      <input
-        value="${c}"
-        style="flex:1"
-        onchange="editCategory(${i}, this.value)"
-      >
-      <button class="btn-del" onclick="deleteCategory(${i})">🗑</button>
+      <input value="${c}" style="flex:1"
+        onchange="editCategory(${i}, this.value)">
+      <button onclick="deleteCategory(${i})">🗑</button>
     </div>
   `).join("");
 
@@ -133,14 +154,11 @@ function editCategory(index, newName) {
   newName = newName.trim();
   if (!newName) return;
 
-  const oldName = d.categories[index];
+  const old = d.categories[index];
   d.categories[index] = newName;
 
-  // atualiza produtos ligados à categoria
   d.products.forEach(p => {
-    if (p.category === oldName) {
-      p.category = newName;
-    }
+    if (p.category === old) p.category = newName;
   });
 
   saveDB(d);
@@ -154,11 +172,8 @@ function deleteCategory(index) {
   const removed = d.categories[index];
   d.categories.splice(index, 1);
 
-  // remove categoria dos produtos
   d.products.forEach(p => {
-    if (p.category === removed) {
-      p.category = "";
-    }
+    if (p.category === removed) p.category = "";
   });
 
   saveDB(d);
@@ -167,13 +182,12 @@ function deleteCategory(index) {
 }
 
 // ==================================================
-// PRODUCTS (EDITÁVEL)
+// PRODUCTS
 // ==================================================
 function addProduct() {
   const d = loadDB();
   const name = $("prodName").value.trim();
   const cat = $("prodCat").value;
-
   if (!name || !cat) return alert("Preencha nome e categoria");
 
   const save = img => {
@@ -195,9 +209,7 @@ function addProduct() {
     const r = new FileReader();
     r.onload = () => save(r.result);
     r.readAsDataURL(file);
-  } else {
-    save(null);
-  }
+  } else save(null);
 }
 
 function renderProducts() {
@@ -206,7 +218,8 @@ function renderProducts() {
     <div style="border-bottom:1px solid #eee;padding:10px 0">
       <input value="${p.name}" onchange="editProduct(${p.id},'name',this.value)">
       <input value="${p.desc || ""}" onchange="editProduct(${p.id},'desc',this.value)">
-      <input type="number" value="${p.maxFlavors}" onchange="editProduct(${p.id},'maxFlavors',this.value)">
+      <input type="number" value="${p.maxFlavors}"
+        onchange="editProduct(${p.id},'maxFlavors',this.value)">
       <div style="margin-top:6px">
         <button onclick="toggleProduct(${p.id})">${p.active ? "⏸ Pausar" : "▶️ Ativar"}</button>
         <button onclick="moveProduct(${i},-1)">⬆️</button>
@@ -244,15 +257,15 @@ function deleteProduct(id) {
 function moveProduct(index, dir) {
   const d = loadDB();
   const arr = d.products;
-  const newIndex = index + dir;
-  if (newIndex < 0 || newIndex >= arr.length) return;
-  [arr[index], arr[newIndex]] = [arr[newIndex], arr[index]];
+  const ni = index + dir;
+  if (ni < 0 || ni >= arr.length) return;
+  [arr[index], arr[ni]] = [arr[ni], arr[index]];
   saveDB(d);
   renderProducts();
 }
 
 // ==================================================
-// PROMOÇÃO DO DIA (COM FOTO)
+// PROMOÇÃO
 // ==================================================
 function savePromo() {
   const d = loadDB();
@@ -263,12 +276,7 @@ function savePromo() {
   if (!desc || !price) return alert("Preencha descrição e preço");
 
   const save = img => {
-    d.promo = {
-      ...d.promo,
-      description: desc,
-      price,
-      image: img
-    };
+    d.promo = { ...d.promo, description: desc, price, image: img };
     saveDB(d);
     renderPromo();
     alert("Promoção salva");
@@ -279,9 +287,7 @@ function savePromo() {
     const r = new FileReader();
     r.onload = () => save(r.result);
     r.readAsDataURL(file);
-  } else {
-    save(d.promo.image || null);
-  }
+  } else save(d.promo.image || null);
 }
 
 function togglePromo() {
@@ -293,9 +299,8 @@ function togglePromo() {
 
 function renderPromo() {
   const d = loadDB();
-  const el = $("promoStatus");
-  if (!el) return;
-  el.textContent = d.promo.active ? "ATIVA" : "PAUSADA";
+  if ($("promoStatus"))
+    $("promoStatus").textContent = d.promo.active ? "ATIVA" : "PAUSADA";
 }
 
 // ==================================================
