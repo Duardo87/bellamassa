@@ -315,4 +315,4 @@ function renderOrders() {
     <p>📦 Pedidos: ${orders.length}</p>
     <p>💰 Faturamento: R$ ${total.toFixed(2)}</p>
   `;
-}
+} 

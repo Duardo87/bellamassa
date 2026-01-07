@@ -41,7 +41,7 @@ body {
 }
 
 /* =====================================================
-   HEADER (COM LOGO TRANSPARENTE)
+   HEADER
 ===================================================== */
 .site-header {
   background: linear-gradient(135deg, var(--primary), var(--primary-dark));
@@ -52,49 +52,10 @@ body {
   z-index: 1200;
 }
 
-.site-header .container {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-/* LOGO */
-.site-logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* imagem da logo */
-.site-logo img {
-  max-height: 44px;
-  width: auto;
-  object-fit: contain;
-  background: transparent;
-  display: block;
-}
-
-/* fallback texto */
-.site-logo .logo-text {
-  font-size: 20px;
-  font-weight: 800;
-  line-height: 1.1;
-}
-
-/* botão WhatsApp no header */
-.header-whats {
-  background: rgba(0,0,0,.15);
-  color: #fff;
-  padding: 8px 14px;
-  border-radius: 999px;
-  font-weight: 700;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.header-whats:hover {
-  background: rgba(0,0,0,.25);
+.container {
+  max-width: var(--max-content-width);
+  margin: 0 auto;
+  padding: 0 14px;
 }
 
 /* =====================================================
@@ -150,6 +111,21 @@ body {
   height: 180px;
   object-fit: cover;
   border-radius: 12px;
+}
+
+.product-card h3 {
+  margin: 0;
+}
+
+.product-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.price {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--primary);
 }
 
 /* =====================================================
@@ -211,7 +187,7 @@ body {
   overflow-y: auto;
 }
 
-/* imagem da promo */
+/* ✅ IMAGEM DA PROMO (CORREÇÃO DEFINITIVA) */
 .promo-card img {
   width: 100%;
   max-height: 220px;
@@ -228,7 +204,7 @@ body {
 }
 
 /* =====================================================
-   CONTADOR PROMO
+   CONTADOR REAL DA PROMOÇÃO
 ===================================================== */
 .promo-timer {
   background: linear-gradient(135deg, #ff3b3b, #b30000);
@@ -238,13 +214,23 @@ body {
   margin: 10px 0 14px;
   text-align: center;
   font-weight: 800;
+  box-shadow: var(--shadow-soft);
 }
 
 .promo-timer span {
+  display: inline-block;
   min-width: 44px;
   font-size: 20px;
 }
 
+.promo-timer small {
+  display: block;
+  font-size: 12px;
+  opacity: .9;
+  margin-top: 4px;
+}
+
+/* pisca quando está acabando */
 .promo-timer.blink {
   animation: blinkUrgency 1s infinite;
 }
@@ -269,6 +255,11 @@ body {
   max-width: calc(100% - 32px);
   box-shadow: var(--shadow-strong);
   z-index: 950;
+}
+
+.cart small {
+  display: block;
+  color: var(--muted);
 }
 
 /* =====================================================
@@ -301,4 +292,4 @@ body {
   .products-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-}
+} 

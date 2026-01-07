@@ -16,29 +16,12 @@
   <!-- ================= HEADER ================= -->
   <header class="site-header" role="banner">
     <div class="container" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
-
-      <!-- LOGO / NOME -->
-      <div style="display:flex;align-items:center;gap:10px">
-        <!-- Logo carregada automaticamente -->
-        <img
-          id="store-logo"
-          src=""
-          alt="Logo da loja"
-          style="display:none;max-height:42px;width:auto"
-        />
-
-        <!-- Nome fallback -->
-        <div>
-          <h1 id="store-name" style="margin:0;font-size:20px">
-            Bella Massa
-          </h1>
-          <small style="opacity:.9">
-            🍕 Visual premium • Pedidos rápidos
-          </small>
-        </div>
+      <div>
+        <h1 id="store-name" style="margin:0;font-size:20px">Bella Massa</h1>
+        <small style="opacity:.9">🍕 Visual premium • Pedidos rápidos</small>
       </div>
 
-      <!-- BOTÃO WHATSAPP -->
+      <!-- Atualizado pelo app.js -->
       <a id="store-phone"
          href="#"
          target="_blank"
@@ -85,6 +68,7 @@
   </button>
 
   <!-- ================= APP ================= -->
+  <!-- defer garante ordem correta -->
   <script src="app.js" defer></script>
 
   <!-- ================= INIT ================= -->
@@ -121,4 +105,4 @@
   </noscript>
 
 </body>
-</html>
+</html> 
