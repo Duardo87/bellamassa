@@ -6,7 +6,7 @@ const ORDERS_KEY = "pizzaria-orders";
 const WHATS_PHONE = "5562993343622";
 
 // ==================================================
-// LOAD DATA (ADMIN → SITE)
+// LOAD DATA
 // ==================================================
 function loadData() {
   let raw = {};
@@ -16,10 +16,10 @@ function loadData() {
 
   return {
     store: raw.store || { name: "Bella Massa", phone: WHATS_PHONE },
-    categories: Array.isArray(raw.categories) ? raw.categories : [],
-    products: Array.isArray(raw.products) ? raw.products : [],
-    extras: Array.isArray(raw.extras) ? raw.extras : [],
-    borders: Array.isArray(raw.borders) ? raw.borders : [],
+    categories: raw.categories || [],
+    products: raw.products || [],
+    extras: raw.extras || [],
+    borders: raw.borders || [],
     promo: raw.promo || null
   };
 }
@@ -51,7 +51,6 @@ function renderPublic() {
   renderCategories();
   renderPromo();
 }
-
 window.app = { renderPublic };
 
 // ==================================================
@@ -59,10 +58,7 @@ window.app = { renderPublic };
 // ==================================================
 function renderHeader() {
   const nameEl = document.getElementById("store-name");
-  const phoneEl = document.getElementById("store-phone");
-
   if (nameEl) nameEl.textContent = data.store.name;
-  if (phoneEl) phoneEl.href = `https://wa.me/${WHATS_PHONE}`;
 }
 
 // ==================================================
@@ -73,20 +69,16 @@ function renderCategories() {
   if (!nav) return;
 
   nav.innerHTML = "";
-
   data.categories.forEach((cat, i) => {
     nav.innerHTML += `
       <button class="${i === 0 ? "active" : ""}"
         data-action="category"
         data-category="${cat}">
         ${cat}
-      </button>
-    `;
+      </button>`;
   });
 
-  if (data.categories[0]) {
-    renderProducts(data.categories[0]);
-  }
+  if (data.categories[0]) renderProducts(data.categories[0]);
 }
 
 // ==================================================
@@ -97,7 +89,6 @@ function renderProducts(category) {
   if (!grid) return;
 
   grid.innerHTML = "";
-
   data.products
     .filter(p => p.category === category)
     .forEach(p => {
@@ -106,40 +97,34 @@ function renderProducts(category) {
           ${p.image ? `<img src="${p.image}">` : ""}
           <h3>${p.name}</h3>
           <p>${p.desc || ""}</p>
-          <div class="price">R$ ${p.price.toFixed(2)}</div>
+          <div class="price">Escolha o tamanho</div>
           <button class="btn btn-green"
             data-action="start"
             data-id="${p.id}">
             Adicionar
           </button>
-        </div>
-      `;
+        </div>`;
     });
 }
 
 // ==================================================
-// EVENTOS GLOBAIS
+// EVENTOS
 // ==================================================
 document.addEventListener("click", e => {
   const el = e.target.closest("[data-action]");
   if (!el) return;
 
-  const action = el.dataset.action;
-
-  if (action === "category") {
-    document.querySelectorAll(".categories button")
-      .forEach(b => b.classList.remove("active"));
+  if (el.dataset.action === "category") {
+    document.querySelectorAll(".categories button").forEach(b => b.classList.remove("active"));
     el.classList.add("active");
     renderProducts(el.dataset.category);
   }
 
-  if (action === "start") startOrder(el.dataset.id);
-  if (action === "confirm-flavors") confirmFlavors();
-  if (action === "confirm-size") confirmSize();
-  if (action === "confirm-border") confirmBorder();
-  if (action === "confirm-extras") confirmExtras();
-  if (action === "send-whats") sendWhats();
-  if (action === "close-modal") closeModal();
+  if (el.dataset.action === "start") startOrder(el.dataset.id);
+  if (el.dataset.action === "confirm-flavors") confirmFlavors();
+  if (el.dataset.action === "confirm-extras") confirmExtras();
+  if (el.dataset.action === "send-whats") sendWhats();
+  if (el.dataset.action === "close-modal") closeModal();
 });
 
 // ==================================================
@@ -160,52 +145,40 @@ function startOrder(id) {
         <label class="extra-item">
           <input type="checkbox" value="${p.name}">
           <span>${p.name}</span>
-        </label>
-      `).join("")}
+        </label>`).join("")}
     <button class="btn btn-green" data-action="confirm-flavors">Continuar</button>
   `);
 }
 
 function confirmFlavors() {
-  selectedFlavors = [...document.querySelectorAll(".promo-card input:checked")]
-    .map(i => i.value);
-
+  selectedFlavors = [...document.querySelectorAll(".promo-card input:checked")].map(i => i.value);
   if (!selectedFlavors.length) return alert("Escolha ao menos 1 sabor");
 
   openModal(`
     <h3>📏 Escolha o tamanho</h3>
-    <button class="btn btn-green" data-size="P" onclick="selectedSize='P';confirmSize()">Pequena</button>
-    <button class="btn btn-green" data-size="M" onclick="selectedSize='M';confirmSize()">Média</button>
-    <button class="btn btn-green" data-size="G" onclick="selectedSize='G';confirmSize()">Grande</button>
+
+    <div class="size-grid">
+      <button class="btn btn-green" onclick="confirmSize('Pequena',35)">🍕 Pequena<br>R$ 35</button>
+      <button class="btn btn-green" onclick="confirmSize('Média',45)">🍕 Média<br>R$ 45</button>
+      <button class="btn btn-green" onclick="confirmSize('Grande',55)">🍕 Grande<br>R$ 55</button>
+    </div>
   `);
 }
 
-function confirmSize() {
-  openModal(`
-    <h3>🥖 Escolha a borda</h3>
-    <button class="btn btn-ghost" onclick="selectedBorder=null;confirmBorder()">Sem borda</button>
-    ${data.borders.filter(b => b.active).map(b => `
-      <button class="btn btn-green"
-        onclick="selectedBorder=${b.id};confirmBorder()">
-        ${b.name} + R$ ${b.price.toFixed(2)}
-      </button>
-    `).join("")}
-  `);
+function confirmSize(label, price) {
+  selectedSize = { label, price };
+  confirmBorder();
 }
 
 function confirmBorder() {
   openModal(`
-    <h3>➕ Adicionais</h3>
-    ${data.extras.filter(e => e.active).map(e => `
-      <label class="extra-item">
-        <input type="checkbox" value="${e.id}">
-        <span>${e.name}</span>
-        <strong>R$ ${e.price.toFixed(2)}</strong>
-      </label>
-    `).join("")}
-    <button class="btn btn-green" data-action="confirm-extras">
-      Adicionar ao carrinho
-    </button>
+    <h3>🥖 Escolha a borda</h3>
+    <button class="btn btn-ghost" onclick="selectedBorder=null;confirmExtras()">Sem borda</button>
+    ${data.borders.filter(b => b.active).map(b => `
+      <button class="btn btn-green"
+        onclick="selectedBorder=${b.id};confirmExtras()">
+        ${b.name} + R$ ${b.price.toFixed(2)}
+      </button>`).join("")}
   `);
 }
 
@@ -213,27 +186,30 @@ function confirmExtras() {
   selectedExtras = [...document.querySelectorAll(".promo-card input:checked")]
     .map(i => data.extras.find(e => e.id == i.value));
 
-  let total = currentProduct.price;
-  let name = `${currentProduct.name} (${selectedFlavors.join("/")}) ${selectedSize}`;
+  let total = selectedSize.price;
+  let breakdown = [`Pizza ${selectedSize.label} — R$ ${selectedSize.price.toFixed(2)}`];
+  let name = `${currentProduct.name} (${selectedFlavors.join("/")}) • ${selectedSize.label}`;
 
   if (selectedBorder) {
     const b = data.borders.find(x => x.id == selectedBorder);
     if (b) {
       total += b.price;
-      name += ` • Borda ${b.name}`;
+      breakdown.push(`Borda ${b.name} — R$ ${b.price.toFixed(2)}`);
     }
   }
 
-  selectedExtras.forEach(e => total += e.price);
+  selectedExtras.forEach(e => {
+    total += e.price;
+    breakdown.push(`${e.name} — R$ ${e.price.toFixed(2)}`);
+  });
 
-  cart.push({ name, price: total });
-
+  cart.push({ name, price: total, breakdown });
   closeModal();
   renderCart();
 }
 
 // ==================================================
-// CARRINHO
+// CARRINHO COM DETALHAMENTO
 // ==================================================
 function renderCart() {
   const div = document.getElementById("cart");
@@ -244,7 +220,9 @@ function renderCart() {
 
   cart.forEach(i => {
     total += i.price;
-    html += `<p>${i.name} — R$ ${i.price.toFixed(2)}</p>`;
+    html += `<p><strong>${i.name}</strong></p>`;
+    i.breakdown.forEach(b => html += `<small>• ${b}</small><br>`);
+    html += `<strong>Subtotal: R$ ${i.price.toFixed(2)}</strong><hr>`;
   });
 
   html += `
@@ -255,9 +233,7 @@ function renderCart() {
       <option>Pix</option>
       <option>Cartão</option>
     </select>
-    <button class="btn btn-green" data-action="send-whats">
-      Enviar no WhatsApp
-    </button>
+    <button class="btn btn-green" data-action="send-whats">Enviar no WhatsApp</button>
   `;
 
   div.innerHTML = html;
@@ -265,25 +241,7 @@ function renderCart() {
 }
 
 // ==================================================
-// PROMOÇÃO DO DIA
-// ==================================================
-function renderPromo() {
-  if (!data.promo || !data.promo.active) return;
-
-  openModal(`
-    ${data.promo.image ? `<img src="${data.promo.image}">` : ""}
-    <h2>🔥 Promoção do Dia</h2>
-    <p>${data.promo.description}</p>
-    <strong>R$ ${data.promo.price.toFixed(2)}</strong>
-    <button class="btn btn-green"
-      onclick="cart.push({name:'${data.promo.description}',price:${data.promo.price}});closeModal();renderCart()">
-      Adicionar
-    </button>
-  `);
-}
-
-// ==================================================
-// WHATSAPP + SALVAR PEDIDO
+// WHATSAPP
 // ==================================================
 function sendWhats() {
   const addr = document.getElementById("address").value;
@@ -294,19 +252,15 @@ function sendWhats() {
 
   cart.forEach(i => {
     total += i.price;
-    msg += `• ${i.name} - R$ ${i.price.toFixed(2)}\n`;
+    msg += `• ${i.name}\n`;
+    i.breakdown.forEach(b => msg += `   - ${b}\n`);
+    msg += `   Subtotal: R$ ${i.price.toFixed(2)}\n\n`;
   });
 
-  msg += `\nTotal: R$ ${total.toFixed(2)}`;
-  msg += `\nEndereço: ${addr}`;
-  msg += `\nPagamento: ${pay}`;
+  msg += `Total: R$ ${total.toFixed(2)}\nEndereço: ${addr}\nPagamento: ${pay}`;
 
   saveOrder({ cart, total, address: addr, payment: pay, date: new Date() });
-
-  window.open(
-    `https://wa.me/${WHATS_PHONE}?text=${encodeURIComponent(msg)}`,
-    "_blank"
-  );
+  window.open(`https://wa.me/${WHATS_PHONE}?text=${encodeURIComponent(msg)}`, "_blank");
 }
 
 // ==================================================
