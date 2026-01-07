@@ -1,14 +1,12 @@
-// ==================================================
-// admin.js (corrigido e robusto)
-// ==================================================
-
+// admin.js — Versão final e robusta (cole por cima do seu admin.js)
 // ==================================================
 // LOGIN CONFIG
 // ==================================================
 const ADMIN_USER = "admin";
-const ADMIN_PASS = "123456"; // mantém compatível com admin.html
+const ADMIN_PASS = "123456";
 
 const KEY = "pizzaria-data";
+const ORDERS_KEY = "pizzaria-orders";
 
 // ==================================================
 // DOM helper
@@ -42,18 +40,15 @@ document.addEventListener("DOMContentLoaded", () => {
   inputUser = $("loginUser");
   inputPass = $("loginPass");
 
-  // se existir um botão local com id btnLogin (algumas versões do admin.html têm)
-  const btnLocal = $("btnLogin");
-  if (btnLocal) {
-    btnLocal.addEventListener("click", () => login());
-  }
-
   // Enter na senha realiza login
   if (inputPass) {
     inputPass.addEventListener("keydown", (e) => {
       if (e.key === "Enter") login();
     });
   }
+
+  // Inicializa admin automaticamente se já estiver logado (opcional)
+  // Não mantemos sessão por segurança — exige login toda vez.
 });
 
 // ==================================================
@@ -67,12 +62,11 @@ function login() {
     if (loginDiv) loginDiv.classList.add("hidden");
     if (adminDiv) adminDiv.classList.remove("hidden");
 
-    // chama loadAdmin se existir (defensivo)
     try {
+      // inicializa admin (compatível com páginas que chamam loadAdmin)
       if (typeof loadAdmin === "function") {
         loadAdmin();
       } else {
-        // chamar a nossa implementação local
         localLoadAdmin();
       }
     } catch (err) {
@@ -119,6 +113,43 @@ function saveDB(data) {
 }
 
 // ==================================================
+// ORDERS STORAGE (salva/ler pedidos para painel)
+// ==================================================
+function loadOrders() {
+  try {
+    return JSON.parse(localStorage.getItem(ORDERS_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveOrdersArray(arr) {
+  try {
+    localStorage.setItem(ORDERS_KEY, JSON.stringify(arr));
+  } catch (e) {
+    console.error("Erro ao salvar pedidos:", e);
+  }
+}
+
+/**
+ * saveOrder(order)
+ * - Recebe um objeto order e salva no localStorage (usado pelo app público)
+ * - Formato sugerido do order:
+ *   { items: [{name,price}], total, address, payment, createdAt: Date.toISOString() }
+ */
+function saveOrder(order) {
+  const arr = loadOrders();
+  const o = {
+    ...order,
+    createdAt: (new Date()).toISOString()
+  };
+  arr.push(o);
+  saveOrdersArray(arr);
+  renderOrders(); // atualiza painel se aberto
+}
+window.saveOrder = saveOrder; // torna global para app.js usar
+
+// ==================================================
 // ADMIN LOAD (compatível + seguro)
 // ==================================================
 function localLoadAdmin() {
@@ -131,9 +162,10 @@ function localLoadAdmin() {
   renderProducts();
   renderExtras();
   renderBorders();
+  renderOrders();
 }
 
-// Se `loadAdmin` for chamado por admin.html (externo), vamos garantir existir
+// garante compatibilidade com páginas que chamam loadAdmin()
 if (typeof window.loadAdmin !== "function") {
   window.loadAdmin = localLoadAdmin;
 }
@@ -148,7 +180,6 @@ function saveStore() {
 
   if (nameEl) d.store.name = nameEl.value.trim();
   if (phoneEl) {
-    // limpa caracteres não numéricos para WhatsApp
     d.store.phone = phoneEl.value.replace(/\D/g, "").trim();
   }
 
@@ -186,8 +217,8 @@ function renderCategories() {
   }
 
   d.categories.forEach(cat => {
-    if (list) list.insertAdjacentHTML("beforeend", `<p>${cat}</p>`);
-    if (select) select.insertAdjacentHTML("beforeend", `<option value="${cat}">${cat}</option>`);
+    if (list) list.insertAdjacentHTML("beforeend", `<p>${escapeHtml(cat)}</p>`);
+    if (select) select.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`);
   });
 }
 
@@ -429,6 +460,44 @@ function savePromo() {
   } else {
     saveObj(null);
   }
+}
+
+// ==================================================
+// PEDIDOS — renderizar/orders
+// ==================================================
+function renderOrders() {
+  const container = $("ordersList");
+  if (!container) return; // não quebra se elemento não existir
+
+  const arr = loadOrders();
+  if (!arr || arr.length === 0) {
+    container.innerHTML = "<p style='opacity:.6'>Nenhum pedido</p>";
+    return;
+  }
+
+  // Mostra do mais recente ao mais antigo
+  const html = arr.slice().reverse().map(o => {
+    const when = new Date(o.createdAt).toLocaleString();
+    const total = Number(o.total || (o.items || []).reduce((s, i) => s + (i.price||0), 0)).toFixed(2);
+    const items = (o.items || []).map(it => `${escapeHtml(it.name)} — R$ ${Number(it.price).toFixed(2)}`).join("<br>");
+    return `
+      <div style="padding:10px;border-bottom:1px solid #eee;margin-bottom:8px">
+        <div style="opacity:.7"><small>${when}</small></div>
+        <div>${items}</div>
+        <div><strong>Total: R$ ${total}</strong></div>
+        <div>Endereço: ${escapeHtml(o.address || "")}</div>
+        <div>Pagamento: ${escapeHtml(o.payment || "")}</div>
+      </div>
+    `;
+  }).join("");
+
+  container.innerHTML = html;
+}
+
+function clearOrders() {
+  if (!confirm("Apagar todos os pedidos?")) return;
+  saveOrdersArray([]);
+  renderOrders();
 }
 
 // ==================================================

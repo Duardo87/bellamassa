@@ -7,7 +7,7 @@
   <!-- VIEWPORT IOS SAFE -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
-  <!-- CSS -->
+  <!-- CSS (verifique o nome do arquivo: styles.css) -->
   <link rel="stylesheet" href="styles.css" />
 </head>
 
@@ -21,7 +21,7 @@
         <small style="opacity:.9">🍕 Visual premium • Pedidos rápidos</small>
       </div>
 
-      <!-- href será atualizado pelo app.js; rel por segurança -->
+      <!-- href será atualizado pelo app.js -->
       <a id="store-phone" href="#" target="_blank" rel="noopener noreferrer" class="btn-ghost" aria-label="Pedir pelo WhatsApp">
         📞 Pedir no WhatsApp
       </a>
@@ -48,11 +48,12 @@
   <div id="modal-root" aria-hidden="true"></div>
 
   <!-- ================= APP (DEFER evita problemas de ordem) ================= -->
+  <!-- app.js deve conter toda a lógica: categorias, produtos, sabores, tamanhos, bordas, adicionais, salvar pedidos e enviar WhatsApp -->
   <script src="app.js" defer></script>
 
   <!-- ================= INIT SEGURO ================= -->
   <script>
-    // inicialização segura: usa DOMContentLoaded (app.js carregado com defer)
+    // inicialização segura: app.js carregado com defer, DOM pronto
     document.addEventListener("DOMContentLoaded", () => {
       // inicia o app público (se estiver disponível)
       if (window.app && typeof window.app.renderPublic === "function") {
