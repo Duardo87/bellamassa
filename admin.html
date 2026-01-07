@@ -11,7 +11,35 @@ const DEFAULT_DATA = {
   theme: "auto"
 };
 
-/* ================= STORAGE SEGURO ================= */
+/* ================= DOM READY ================= */
+document.addEventListener("DOMContentLoaded", () => {
+  window.loginDiv = document.getElementById("login");
+  window.adminDiv = document.getElementById("admin");
+
+  window.storeName = document.getElementById("storeName");
+  window.storePhone = document.getElementById("storePhone");
+
+  window.catName = document.getElementById("catName");
+  window.catList = document.getElementById("catList");
+
+  window.prodName = document.getElementById("prodName");
+  window.prodDesc = document.getElementById("prodDesc");
+  window.prodPrice = document.getElementById("prodPrice");
+  window.prodCat = document.getElementById("prodCat");
+  window.prodImage = document.getElementById("prodImage");
+  window.prodBest = document.getElementById("prodBest");
+  window.productList = document.getElementById("productList");
+
+  window.extraName = document.getElementById("extraName");
+  window.extraPrice = document.getElementById("extraPrice");
+  window.extraList = document.getElementById("extraList");
+
+  window.promoDesc = document.getElementById("promoDesc");
+  window.promoPrice = document.getElementById("promoPrice");
+  window.promoImage = document.getElementById("promoImage");
+});
+
+/* ================= STORAGE ================= */
 function loadDB() {
   const raw = JSON.parse(localStorage.getItem(KEY)) || {};
   return {
@@ -30,9 +58,6 @@ function saveDB(data) {
 }
 
 /* ================= LOGIN ================= */
-const loginDiv = document.getElementById("login");
-const adminDiv = document.getElementById("admin");
-
 function login() {
   loginDiv.classList.add("hidden");
   adminDiv.classList.remove("hidden");
@@ -43,11 +68,11 @@ function logout() {
   location.reload();
 }
 
-/* ================= LOAD ================= */
+/* ================= LOAD ADMIN ================= */
 function loadAdmin() {
   const d = loadDB();
-  storeName.value = d.store.name;
-  storePhone.value = d.store.phone;
+  storeName.value = d.store.name || "";
+  storePhone.value = d.store.phone || "";
   renderCategories();
   renderProducts();
   renderExtras();
@@ -88,12 +113,9 @@ function renderCategories() {
 
 /* ================= PRODUTOS ================= */
 function addProduct() {
-  if (
-    !prodName.value ||
-    !prodPrice.value ||
-    !prodCat.value ||
-    !prodImage.files[0]
-  ) return alert("Preencha todos os campos");
+  if (!prodName.value || !prodPrice.value || !prodCat.value || !prodImage.files[0]) {
+    return alert("Preencha todos os campos");
+  }
 
   const d = loadDB();
   const reader = new FileReader();
@@ -111,7 +133,7 @@ function addProduct() {
 
     saveDB(d);
     renderProducts();
-    alert("Produto adicionado com sucesso");
+    alert("Produto adicionado");
   };
 
   reader.readAsDataURL(prodImage.files[0]);
@@ -122,9 +144,7 @@ function renderProducts() {
   productList.innerHTML = "";
 
   d.products.forEach(p => {
-    productList.innerHTML += `
-      <p>${p.name} — R$ ${p.price.toFixed(2)}</p>
-    `;
+    productList.innerHTML += `<p>${p.name} — R$ ${p.price.toFixed(2)}</p>`;
   });
 }
 
@@ -194,26 +214,5 @@ function savePromo() {
   };
 
   reader.readAsDataURL(promoImage.files[0]);
-}
-
-/* ================= BACKUP ================= */
-function exportJSON() {
-  const blob = new Blob(
-    [JSON.stringify(loadDB(), null, 2)],
-    { type: "application/json" }
-  );
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "backup-bella-massa.json";
-  a.click();
-}
-
-function importJSON() {
-  const reader = new FileReader();
-  reader.onload = () => {
-    localStorage.setItem(KEY, reader.result);
-    location.reload();
-  };
-  reader.readAsText(importFile.files[0]);
 }
 </script>
