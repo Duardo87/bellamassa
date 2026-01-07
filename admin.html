@@ -19,6 +19,7 @@
     id="loginUser"
     placeholder="Usuário"
     style="width:100%;padding:10px;margin-bottom:8px"
+    autocomplete="username"
   >
 
   <input
@@ -26,11 +27,17 @@
     type="password"
     placeholder="Senha"
     style="width:100%;padding:10px;margin-bottom:12px"
+    autocomplete="current-password"
   >
 
-  <button class="btn btn-green" onclick="login()" style="width:100%">
+  <!-- botão local — não usa onclick para evitar dependência com admin.js -->
+  <button id="btnLogin" class="btn btn-green" style="width:100%">
     Entrar
   </button>
+
+  <p style="margin-top:10px;font-size:13px;color:#666">
+    Use <strong>admin</strong> / <strong>123456</strong> (teste).
+  </p>
 </section>
 
 <!-- ================= ADMIN ================= -->
@@ -56,7 +63,7 @@
   <input id="catName" placeholder="Nova categoria">
   <button class="btn btn-green" onclick="addCategory()">Adicionar</button>
 
-  <div id="catList"></div>
+  <div id="catList" style="margin-top:10px"></div>
 
   <hr>
 
@@ -66,7 +73,7 @@
   <input id="prodName" placeholder="Nome do produto">
   <input id="prodDesc" placeholder="Descrição">
   <input id="prodPrice" type="number" placeholder="Preço">
-  <select id="prodCat"></select>
+  <select id="prodCat" aria-label="Categoria do produto"></select>
   <input id="prodFlavors" type="number" placeholder="Máx sabores (ex: 2)">
   <input id="prodImage" type="file">
 
@@ -79,7 +86,7 @@
     Adicionar Produto
   </button>
 
-  <div id="productList"></div>
+  <div id="productList" style="margin-top:12px"></div>
 
   <hr>
 
@@ -93,7 +100,7 @@
     Adicionar
   </button>
 
-  <div id="extraList"></div>
+  <div id="extraList" style="margin-top:10px"></div>
 
   <hr>
 
@@ -107,7 +114,7 @@
     Adicionar
   </button>
 
-  <div id="borderList"></div>
+  <div id="borderList" style="margin-top:10px"></div>
 
   <hr>
 
@@ -131,6 +138,54 @@
 </section>
 
 <!-- ================= SCRIPT ================= -->
+<!-- Script local para login + inicialização segura -->
+<script>
+  (function(){
+    const USER = "admin";
+    const PASS = "123456";
+
+    // Ao carregar o DOM, liga o handler do botão de login
+    document.addEventListener("DOMContentLoaded", () => {
+      const btn = document.getElementById("btnLogin");
+      if (!btn) return;
+
+      btn.addEventListener("click", () => {
+        const u = (document.getElementById("loginUser")?.value || "").trim();
+        const p = (document.getElementById("loginPass")?.value || "").trim();
+
+        if (u === USER && p === PASS) {
+          // mostra painel admin
+          const loginSection = document.getElementById("login");
+          const adminSection = document.getElementById("admin");
+          if (loginSection) loginSection.classList.add("hidden");
+          if (adminSection) adminSection.classList.remove("hidden");
+
+          // chama loadAdmin se a função existir no admin.js
+          setTimeout(() => {
+            if (typeof loadAdmin === "function") {
+              try { loadAdmin(); } catch (e) { console.warn("loadAdmin error:", e); }
+            }
+          }, 50);
+        } else {
+          alert("Login inválido");
+        }
+      });
+
+      // também permitir Enter no campo senha
+      const passInput = document.getElementById("loginPass");
+      if (passInput) {
+        passInput.addEventListener("keydown", (ev) => {
+          if (ev.key === "Enter") {
+            ev.preventDefault();
+            btn.click();
+          }
+        });
+      }
+    });
+  })();
+</script>
+
+<!-- admin.js — seu código administrativo (mantive externo) -->
 <script src="admin.js" defer></script>
 
 </body>
