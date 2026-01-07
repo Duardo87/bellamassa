@@ -4,18 +4,20 @@
   <meta charset="utf-8">
   <title>Admin • Bella Massa</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
 
-<!-- ================= LOGIN ================= -->
+<!-- LOGIN -->
 <section id="login">
   <h2>🔐 Login Admin</h2>
+  <input id="user" placeholder="Usuário">
+  <input id="pass" type="password" placeholder="Senha">
   <button class="btn btn-green" onclick="login()">Entrar</button>
 </section>
 
-<!-- ================= ADMIN ================= -->
+<!-- ADMIN -->
 <section id="admin" class="hidden">
 
   <h2>⚙️ Painel Admin</h2>
@@ -23,38 +25,31 @@
   <!-- LOJA -->
   <h3>🏪 Dados da Loja</h3>
   <input id="storeName" placeholder="Nome da loja">
-  <input id="storePhone" placeholder="WhatsApp (ex: 5511999999999)">
+  <input id="storePhone" placeholder="WhatsApp (ex: 5562993343622)">
   <button class="btn btn-green" onclick="saveStore()">Salvar Loja</button>
 
   <hr>
 
-  <!-- CATEGORIAS -->
-  <h3>📂 Categorias</h3>
-  <input id="catName" placeholder="Nova categoria">
-  <button class="btn btn-green" onclick="addCategory()">Adicionar</button>
-  <div id="catList"></div>
-
-  <hr>
-
-  <!-- PRODUTOS -->
-  <h3>🍕 Produtos</h3>
+  <!-- PRODUTO -->
+  <h3>🍕 Produto</h3>
   <input id="prodName" placeholder="Nome">
   <input id="prodDesc" placeholder="Descrição">
-  <input id="prodPrice" type="number" placeholder="Preço">
-  <select id="prodCat"></select>
-  <input id="prodFlavors" type="number" placeholder="Máx sabores (ex: 2)">
+
+  <input id="priceP" type="number" placeholder="Preço P">
+  <input id="priceM" type="number" placeholder="Preço M">
+  <input id="priceG" type="number" placeholder="Preço G">
+
   <input id="prodImage" type="file">
-  <label>
-    <input type="checkbox" id="prodBest"> Mais pedido
-  </label>
+
   <button class="btn btn-green" onclick="addProduct()">Adicionar Produto</button>
+
   <div id="productList"></div>
 
   <hr>
 
   <!-- ADICIONAIS -->
   <h3>➕ Adicionais</h3>
-  <input id="extraName" placeholder="Nome do adicional">
+  <input id="extraName" placeholder="Nome">
   <input id="extraPrice" type="number" placeholder="Preço">
   <button class="btn btn-green" onclick="addExtra()">Adicionar</button>
   <div id="extraList"></div>
@@ -63,19 +58,10 @@
 
   <!-- BORDAS -->
   <h3>🥖 Bordas</h3>
-  <input id="borderName" placeholder="Nome da borda">
+  <input id="borderName" placeholder="Nome">
   <input id="borderPrice" type="number" placeholder="Preço">
   <button class="btn btn-green" onclick="addBorder()">Adicionar</button>
   <div id="borderList"></div>
-
-  <hr>
-
-  <!-- PROMO -->
-  <h3>🔥 Promoção</h3>
-  <input id="promoDesc" placeholder="Descrição">
-  <input id="promoPrice" type="number" placeholder="Preço">
-  <input id="promoImage" type="file">
-  <button class="btn btn-green" onclick="savePromo()">Salvar Promo</button>
 
   <hr>
 
@@ -83,8 +69,6 @@
 
 </section>
 
-<!-- SCRIPT ADMIN (OBRIGATÓRIO SER EXTERNO) -->
-<script src="admin.js" defer></script>
-
+<script src="admin.js"></script>
 </body>
 </html>

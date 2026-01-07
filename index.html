@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <title>Bella Massa • Cardápio</title>
 
-  <!-- VIEWPORT SEGURO IOS -->
+  <!-- VIEWPORT IOS SAFE -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- CSS -->
@@ -43,16 +43,17 @@
   🟢 Ver pedido
 </button>
 
-<!-- ================= ROOT DE MODAIS (ANTI BUG IOS) ================= -->
+<!-- ================= MODAIS ================= -->
 <div id="modal-root"></div>
 
 <!-- ================= APP ================= -->
+<!-- ⚠️ DEFER evita erro de carregamento -->
 <script src="app.js" defer></script>
 
 <!-- ================= INIT SEGURO ================= -->
 <script>
   document.addEventListener("DOMContentLoaded", () => {
-    // inicia o app
+    // inicia o app público
     if (window.app && typeof window.app.renderPublic === "function") {
       window.app.renderPublic();
     }

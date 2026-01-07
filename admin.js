@@ -1,250 +1,87 @@
-/* ==================================================
-   CONFIG
-================================================== */
 const KEY = "pizzaria-data";
 
-const DEFAULT_DATA = {
-  store: { name: "", phone: "" },
-  categories: [],
+const db = JSON.parse(localStorage.getItem(KEY)) || {
+  store: { name: "Bella Massa", phone: "5562993343622" },
   products: [],
   extras: [],
-  borders: [],
-  promo: null,
-  theme: "auto"
+  borders: []
 };
 
-/* ==================================================
-   STORAGE
-================================================== */
-function loadDB() {
-  let raw = {};
-  try {
-    raw = JSON.parse(localStorage.getItem(KEY)) || {};
-  } catch {}
-
-  return {
-    ...DEFAULT_DATA,
-    ...raw,
-    store: { ...DEFAULT_DATA.store, ...(raw.store || {}) },
-    categories: Array.isArray(raw.categories) ? raw.categories : [],
-    products: Array.isArray(raw.products) ? raw.products : [],
-    extras: Array.isArray(raw.extras) ? raw.extras : [],
-    borders: Array.isArray(raw.borders) ? raw.borders : [],
-    promo: raw.promo || null
-  };
+function save() {
+  localStorage.setItem(KEY, JSON.stringify(db));
 }
 
-function saveDB(data) {
-  localStorage.setItem(KEY, JSON.stringify(data));
-}
-
-/* ==================================================
-   DOM
-================================================== */
-const $ = id => document.getElementById(id);
-
-let loginDiv, adminDiv;
-let storeName, storePhone;
-let catName, catList, prodCat;
-let prodName, prodDesc, prodPrice, prodImage, prodBest, prodFlavors, productList;
-let extraName, extraPrice, extraList;
-let borderName, borderPrice, borderList;
-let promoDesc, promoPrice, promoImage;
-
-document.addEventListener("DOMContentLoaded", () => {
-  loginDiv = $("login");
-  adminDiv = $("admin");
-
-  storeName  = $("storeName");
-  storePhone = $("storePhone");
-
-  catName = $("catName");
-  catList = $("catList");
-  prodCat = $("prodCat");
-
-  prodName    = $("prodName");
-  prodDesc    = $("prodDesc");
-  prodPrice   = $("prodPrice");
-  prodImage   = $("prodImage");
-  prodBest    = $("prodBest");
-  prodFlavors = $("prodFlavors");
-  productList = $("productList");
-
-  extraName  = $("extraName");
-  extraPrice = $("extraPrice");
-  extraList  = $("extraList");
-
-  borderName  = $("borderName");
-  borderPrice = $("borderPrice");
-  borderList  = $("borderList");
-
-  promoDesc  = $("promoDesc");
-  promoPrice = $("promoPrice");
-  promoImage = $("promoImage");
-});
-
-/* ==================================================
-   LOGIN
-================================================== */
 function login() {
-  loginDiv.classList.add("hidden");
-  adminDiv.classList.remove("hidden");
-  loadAdmin();
+  if (user.value === "admin" && pass.value === "123") {
+    login.style.display = "none";
+    admin.classList.remove("hidden");
+    render();
+  } else {
+    alert("Login inválido");
+  }
 }
 
 function logout() {
   location.reload();
 }
 
-/* ==================================================
-   LOAD
-================================================== */
-function loadAdmin() {
-  const d = loadDB();
-  storeName.value = d.store.name || "";
-  storePhone.value = d.store.phone || "";
-  renderCategories();
-  renderProducts();
-  renderExtras();
-  renderBorders();
-}
-
-/* ==================================================
-   STORE
-================================================== */
 function saveStore() {
-  const d = loadDB();
-  d.store.name = storeName.value.trim();
-  d.store.phone = storePhone.value.trim();
-  saveDB(d);
-  alert("Loja salva");
+  db.store.name = storeName.value;
+  db.store.phone = storePhone.value;
+  save();
+  alert("Salvo");
 }
 
-/* ==================================================
-   CATEGORIAS
-================================================== */
-function addCategory() {
-  if (!catName.value.trim()) return;
-
-  const d = loadDB();
-  d.categories.push(catName.value.trim());
-  saveDB(d);
-  catName.value = "";
-  renderCategories();
-}
-
-function renderCategories() {
-  const d = loadDB();
-  catList.innerHTML = "";
-  prodCat.innerHTML = "";
-
-  d.categories.forEach(cat => {
-    catList.innerHTML += `<p>${cat}</p>`;
-    prodCat.innerHTML += `<option value="${cat}">${cat}</option>`;
-  });
-}
-
-/* ==================================================
-   PRODUTOS
-================================================== */
 function addProduct() {
-  if (!prodImage.files[0]) return;
-
-  const d = loadDB();
   const reader = new FileReader();
-
   reader.onload = () => {
-    d.products.push({
+    db.products.push({
       id: Date.now(),
       name: prodName.value,
       desc: prodDesc.value,
-      price: Number(prodPrice.value),
-      category: prodCat.value,
-      image: reader.result,
-      best: prodBest.checked,
-      maxFlavors: Number(prodFlavors.value) || 2
+      prices: {
+        P: Number(priceP.value),
+        M: Number(priceM.value),
+        G: Number(priceG.value)
+      },
+      image: reader.result
     });
-
-    saveDB(d);
-    renderProducts();
+    save();
+    render();
   };
-
   reader.readAsDataURL(prodImage.files[0]);
 }
 
-function renderProducts() {
-  const d = loadDB();
-  productList.innerHTML = "";
-  d.products.forEach(p => {
-    productList.innerHTML += `<p>${p.name} — R$ ${p.price}</p>`;
-  });
-}
-
-/* ==================================================
-   EXTRAS
-================================================== */
 function addExtra() {
-  const d = loadDB();
-  d.extras.push({
+  db.extras.push({
     id: Date.now(),
     name: extraName.value,
-    price: Number(extraPrice.value),
-    active: true
+    price: Number(extraPrice.value)
   });
-  saveDB(d);
-  renderExtras();
+  save();
+  render();
 }
 
-function renderExtras() {
-  const d = loadDB();
-  extraList.innerHTML = "";
-  d.extras.forEach(e => {
-    extraList.innerHTML += `<p>${e.name} — R$ ${e.price}</p>`;
-  });
-}
-
-/* ==================================================
-   BORDAS
-================================================== */
 function addBorder() {
-  const d = loadDB();
-  d.borders.push({
+  db.borders.push({
     id: Date.now(),
     name: borderName.value,
-    price: Number(borderPrice.value),
-    active: true
+    price: Number(borderPrice.value)
   });
-  saveDB(d);
-  renderBorders();
+  save();
+  render();
 }
 
-function renderBorders() {
-  const d = loadDB();
-  borderList.innerHTML = "";
-  d.borders.forEach(b => {
-    borderList.innerHTML += `<p>${b.name} — R$ ${b.price}</p>`;
-  });
-}
+function render() {
+  productList.innerHTML = db.products.map(p =>
+    `<p>${p.name} (P ${p.prices.P} | M ${p.prices.M} | G ${p.prices.G})</p>`
+  ).join("");
 
-/* ==================================================
-   PROMO
-================================================== */
-function savePromo() {
-  if (!promoImage.files[0]) return;
+  extraList.innerHTML = db.extras.map(e =>
+    `<p>${e.name} - R$ ${e.price}</p>`
+  ).join("");
 
-  const d = loadDB();
-  const reader = new FileReader();
-
-  reader.onload = () => {
-    d.promo = {
-      active: true,
-      description: promoDesc.value,
-      price: Number(promoPrice.value),
-      image: reader.result
-    };
-    saveDB(d);
-    alert("Promo salva");
-  };
-
-  reader.readAsDataURL(promoImage.files[0]);
+  borderList.innerHTML = db.borders.map(b =>
+    `<p>${b.name} - R$ ${b.price}</p>`
+  ).join("");
 }
