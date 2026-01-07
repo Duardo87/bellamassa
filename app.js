@@ -1,10 +1,13 @@
 // ==================================================
-// CONFIG / STORAGE (SEGURO)
+// CONFIG / STORAGE
 // ==================================================
 const STORAGE_KEY = "pizzaria-data";
 
+// 📞 WHATSAPP FIXO (FORMATO CORRETO)
+const WHATS_PHONE = "5562993343622";
+
 const DEFAULT_DATA = {
-  store: { name: "Bella Massa", phone: "" },
+  store: { name: "Bella Massa", phone: WHATS_PHONE },
   products: [],
   extras: [],
   borders: [],
@@ -16,9 +19,7 @@ function loadData() {
   let raw = {};
   try {
     raw = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-  } catch {
-    raw = {};
-  }
+  } catch {}
 
   return {
     ...DEFAULT_DATA,
@@ -40,6 +41,7 @@ let cart = [];
 let selectedProduct = null;
 let selectedFlavors = [];
 let selectedExtras = [];
+let selectedBorder = null;
 
 // ==================================================
 // INIT
@@ -49,7 +51,7 @@ function renderPublic() {
   applyTheme();
   renderHeader();
   renderCategories();
-  setTimeout(renderPromo, 300); // evita conflito DOM
+  renderComboOfDay();
 }
 
 window.app = { renderPublic };
@@ -61,10 +63,8 @@ function renderHeader() {
   const nameEl = document.getElementById("store-name");
   const phoneEl = document.getElementById("store-phone");
 
-  if (nameEl) nameEl.textContent = data.store.name || "";
-  if (phoneEl && data.store.phone) {
-    phoneEl.href = "https://wa.me/" + data.store.phone;
-  }
+  if (nameEl) nameEl.textContent = data.store.name;
+  if (phoneEl) phoneEl.href = `https://wa.me/${WHATS_PHONE}`;
 }
 
 // ==================================================
@@ -72,9 +72,49 @@ function renderHeader() {
 // ==================================================
 function applyTheme() {
   const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const theme =
-    data.theme === "auto" ? (prefersDark ? "dark" : "light") : data.theme;
-  document.body.classList.toggle("dark", theme === "dark");
+  document.body.classList.toggle(
+    "dark",
+    data.theme === "dark" || (data.theme === "auto" && prefersDark)
+  );
+}
+
+// ==================================================
+// COMBO AUTOMÁTICO POR DIA
+// ==================================================
+function renderComboOfDay() {
+  const day = new Date().getDay();
+
+  const combos = {
+    1: { name: "🍕 Segunda da Mussarela", price: 39.9 },
+    2: { name: "🍕 Terça Calabresa", price: 42.9 },
+    3: { name: "🍕 Quarta em Dobro", price: 59.9 },
+    4: { name: "🍕 Quinta Especial", price: 49.9 },
+    5: { name: "🍕 Sexta Família", price: 69.9 },
+    6: { name: "🍕 Sábado Premium", price: 79.9 },
+    0: { name: "🍕 Domingo Completo", price: 74.9 }
+  };
+
+  const combo = combos[day];
+  if (!combo) return;
+
+  openModal(`
+    <h2>${combo.name}</h2>
+    <strong>R$ ${combo.price.toFixed(2)}</strong>
+    <button class="btn btn-green" data-action="accept-combo">
+      Adicionar combo
+    </button>
+    <button class="btn btn-ghost" data-action="close-modal">
+      Depois
+    </button>
+  `);
+
+  document.addEventListener("click", e => {
+    if (e.target.dataset.action === "accept-combo") {
+      cart.push({ name: combo.name, price: combo.price });
+      closeAnyModal();
+      renderCart();
+    }
+  }, { once: true });
 }
 
 // ==================================================
@@ -84,22 +124,18 @@ function renderCategories() {
   const nav = document.getElementById("categories");
   if (!nav) return;
 
-  const categories = [
-    ...new Set(data.products.map(p => p.category).filter(Boolean))
-  ];
-
+  const categories = [...new Set(data.products.map(p => p.category))];
   nav.innerHTML = "";
-  if (!categories.length) return;
 
   categories.forEach((cat, i) => {
-    nav.insertAdjacentHTML(
-      "beforeend",
-      `<button data-action="category" data-category="${cat}"
-        class="${i === 0 ? "active" : ""}">${cat}</button>`
-    );
+    nav.innerHTML += `
+      <button data-action="category" data-category="${cat}"
+        class="${i === 0 ? "active" : ""}">
+        ${cat}
+      </button>`;
   });
 
-  renderProducts(categories[0]);
+  if (categories[0]) renderProducts(categories[0]);
 }
 
 // ==================================================
@@ -107,33 +143,28 @@ function renderCategories() {
 // ==================================================
 function renderProducts(category) {
   const grid = document.getElementById("products");
-  if (!grid || !category) return;
+  if (!grid) return;
 
   grid.innerHTML = "";
 
-  data.products
-    .filter(p => p.category === category)
-    .forEach(p => {
-      grid.insertAdjacentHTML(
-        "beforeend",
-        `<div class="product-card">
-          ${p.best ? `<span class="badge">⭐ Mais pedido</span>` : ""}
-          ${p.image ? `<img src="${p.image}" alt="${p.name}">` : ""}
-          <h3>${p.name}</h3>
-          <p>${p.desc || ""}</p>
-          <div class="price">R$ ${p.price.toFixed(2)}</div>
-          <button class="btn btn-green"
-            data-action="start-order"
-            data-id="${p.id}">
-            Adicionar
-          </button>
-        </div>`
-      );
-    });
+  data.products.filter(p => p.category === category).forEach(p => {
+    grid.innerHTML += `
+      <div class="product-card">
+        ${p.image ? `<img src="${p.image}">` : ""}
+        <h3>${p.name}</h3>
+        <p>${p.desc || ""}</p>
+        <div class="price">R$ ${p.price.toFixed(2)}</div>
+        <button class="btn btn-green"
+          data-action="add-product"
+          data-id="${p.id}">
+          Adicionar
+        </button>
+      </div>`;
+  });
 }
 
 // ==================================================
-// EVENT DELEGATION GLOBAL
+// EVENTOS
 // ==================================================
 document.addEventListener("click", e => {
   const el = e.target.closest("[data-action]");
@@ -142,183 +173,34 @@ document.addEventListener("click", e => {
   const action = el.dataset.action;
 
   if (action === "category") {
-    document
-      .querySelectorAll(".categories button")
+    document.querySelectorAll(".categories button")
       .forEach(b => b.classList.remove("active"));
     el.classList.add("active");
     renderProducts(el.dataset.category);
   }
 
-  if (action === "start-order") startFlavors(Number(el.dataset.id));
-  if (action === "confirm-flavors") confirmFlavors();
-  if (action === "confirm-extras") confirmExtras();
-  if (action === "confirm-border") confirmBorder();
-
-  if (action === "accept-promo") acceptPromo();
-  if (action === "close-promo") closePromo();
-  if (action === "close-modal") closeAnyModal();
-
+  if (action === "add-product") addProductToCart(el.dataset.id);
   if (action === "send-whats") sendToWhatsApp();
+  if (action === "close-modal") closeAnyModal();
 });
 
 // ==================================================
-// 1️⃣ SABORES
+// ADD PRODUTO
 // ==================================================
-function startFlavors(id) {
-  selectedProduct = data.products.find(p => p.id === id);
-  if (!selectedProduct) return;
+function addProductToCart(id) {
+  const p = data.products.find(x => x.id == id);
+  if (!p) return;
 
-  selectedFlavors = [];
-  selectedExtras = [];
-
-  closeAnyModal();
-
-  const flavors = data.products.filter(
-    p => p.category === selectedProduct.category
-  );
-
-  const max = selectedProduct.maxFlavors || 2;
-
-  openModal(`
-    <h3>🍕 Escolha até ${max} sabores</h3>
-    ${flavors.map(f => `
-      <label class="extra-item">
-        <input type="checkbox" value="${f.name}">
-        <span>${f.name}</span>
-      </label>`).join("")}
-    <button class="btn btn-green" data-action="confirm-flavors">Continuar</button>
-    <button class="btn btn-ghost" data-action="close-modal">Cancelar</button>
-  `);
-}
-
-function confirmFlavors() {
-  const checks = [...document.querySelectorAll(".promo-card input:checked")];
-  const max = selectedProduct.maxFlavors || 2;
-
-  if (!checks.length) return alert("Escolha pelo menos 1 sabor");
-  if (checks.length > max) return alert(`Máximo de ${max} sabores`);
-
-  selectedFlavors = checks.map(c => c.value);
-  openExtras();
-}
-
-// ==================================================
-// 2️⃣ ADICIONAIS
-// ==================================================
-function openExtras() {
-  const extras = data.extras.filter(e => e.active);
-
-  openModal(`
-    <h3>➕ Adicionais</h3>
-    ${extras.length ? extras.map(e => `
-      <label class="extra-item">
-        <input type="checkbox" value="${e.id}">
-        <span>${e.name}</span>
-        <strong>R$ ${e.price.toFixed(2)}</strong>
-      </label>`).join("") : "<p>Nenhum adicional</p>"}
-    <button class="btn btn-green" data-action="confirm-extras">Continuar</button>
-    <button class="btn btn-ghost" data-action="close-modal">Cancelar</button>
-  `);
-}
-
-function confirmExtras() {
-  selectedExtras = [];
-
-  document.querySelectorAll(".promo-card input:checked").forEach(chk => {
-    const e = data.extras.find(x => x.id == chk.value);
-    if (e) selectedExtras.push(e);
-  });
-
-  openBorders();
-}
-
-// ==================================================
-// 3️⃣ BORDA
-// ==================================================
-function openBorders() {
-  const borders = data.borders.filter(b => b.active);
-
-  openModal(`
-    <h3>🥖 Borda</h3>
-    <label class="extra-item">
-      <input type="radio" name="border" value="none" checked>
-      <span>Sem borda</span>
-      <strong>R$ 0,00</strong>
-    </label>
-    ${borders.map(b => `
-      <label class="extra-item">
-        <input type="radio" name="border" value="${b.id}">
-        <span>${b.name}</span>
-        <strong>R$ ${b.price.toFixed(2)}</strong>
-      </label>`).join("")}
-    <button class="btn btn-green" data-action="confirm-border">Adicionar ao pedido</button>
-  `);
-}
-
-function confirmBorder() {
-  const selected = document.querySelector('input[name="border"]:checked');
-
-  let total = selectedProduct.price;
-  let name = `${selectedProduct.name} (${selectedFlavors.join(" / ")})`;
-
-  selectedExtras.forEach(e => {
-    total += e.price;
-    name += ` + ${e.name}`;
-  });
-
-  if (selected && selected.value !== "none") {
-    const b = data.borders.find(x => x.id == selected.value);
-    if (b) {
-      total += b.price;
-      name += ` • Borda ${b.name}`;
-    }
-  }
-
-  cart.push({ name, price: total });
-
-  resetOrder();
+  cart.push({ name: p.name, price: p.price });
   renderCart();
 }
 
 // ==================================================
-// PROMOÇÃO
-// ==================================================
-function renderPromo() {
-  if (!data.promo || !data.promo.active) return;
-
-  const key = "promoClosed-" + new Date().toISOString().slice(0, 10);
-  if (localStorage.getItem(key)) return;
-
-  openModal(`
-    ${data.promo.image ? `<img src="${data.promo.image}">` : ""}
-    <h2>🔥 Promoção do Dia</h2>
-    <p>${data.promo.description}</p>
-    <strong>R$ ${data.promo.price.toFixed(2)}</strong>
-    <button class="btn btn-green" data-action="accept-promo">Aproveitar</button>
-    <button class="btn btn-ghost" data-action="close-promo">Depois</button>
-  `);
-}
-
-function acceptPromo() {
-  cart.push({ name: data.promo.description, price: data.promo.price });
-  closePromo();
-  renderCart();
-}
-
-function closePromo() {
-  const key = "promoClosed-" + new Date().toISOString().slice(0, 10);
-  localStorage.setItem(key, "1");
-  closeAnyModal();
-}
-
-// ==================================================
-// CARRINHO
+// CARRINHO + ENDEREÇO + PAGAMENTO
 // ==================================================
 function renderCart() {
   const div = document.getElementById("cart");
   if (!div) return;
-
-  div.classList.remove("hidden");
 
   let total = 0;
   let html = "<h3>🧾 Seu pedido</h3>";
@@ -329,34 +211,51 @@ function renderCart() {
   });
 
   html += `
-    <strong>Total: R$ ${total.toFixed(2)}</strong>
-    <button class="btn btn-green" data-action="send-whats">Enviar no WhatsApp</button>
+    <p><strong>Total: R$ ${total.toFixed(2)}</strong></p>
+
+    <input id="address" placeholder="Endereço completo" style="width:100%;padding:8px;margin:6px 0">
+    <select id="payment" style="width:100%;padding:8px;margin-bottom:10px">
+      <option value="Dinheiro">Dinheiro</option>
+      <option value="Pix">Pix</option>
+      <option value="Cartão">Cartão</option>
+    </select>
+
+    <button class="btn btn-green" data-action="send-whats">
+      Enviar no WhatsApp
+    </button>
   `;
 
   div.innerHTML = html;
+  div.classList.remove("hidden");
 }
 
 // ==================================================
-// WHATSAPP
+// WHATSAPP FINAL (SEM ERRO 404)
 // ==================================================
 function sendToWhatsApp() {
-  if (!data.store.phone) return alert("WhatsApp não configurado");
+  const address = document.getElementById("address")?.value || "";
+  const payment = document.getElementById("payment")?.value || "";
 
-  let msg = `Pedido - ${data.store.name}%0A%0A`;
+  let msg = `Pedido - ${data.store.name}\n\n`;
   let total = 0;
 
   cart.forEach(i => {
     total += i.price;
-    msg += `• ${i.name} R$ ${i.price.toFixed(2)}%0A`;
+    msg += `• ${i.name} - R$ ${i.price.toFixed(2)}\n`;
   });
 
-  msg += `%0ATotal: R$ ${total.toFixed(2)}`;
+  msg += `\nTotal: R$ ${total.toFixed(2)}`;
+  msg += `\n\nEndereço: ${address}`;
+  msg += `\nPagamento: ${payment}`;
 
-  window.open(`https://wa.me/${data.store.phone}?text=${msg}`, "_blank");
+  window.open(
+    `https://wa.me/${WHATS_PHONE}?text=${encodeURIComponent(msg)}`,
+    "_blank"
+  );
 }
 
 // ==================================================
-// UTIL
+// MODAL
 // ==================================================
 function openModal(content) {
   closeAnyModal();
@@ -368,10 +267,4 @@ function openModal(content) {
 
 function closeAnyModal() {
   document.querySelectorAll(".promo-overlay").forEach(m => m.remove());
-}
-
-function resetOrder() {
-  selectedProduct = null;
-  selectedFlavors = [];
-  selectedExtras = [];
 }
