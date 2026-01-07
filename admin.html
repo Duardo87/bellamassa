@@ -4,71 +4,134 @@
   <meta charset="utf-8">
   <title>Admin • Bella Massa</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- CSS -->
   <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<section id="login">
+<!-- ================= LOGIN ================= -->
+<section id="login" style="padding:20px">
   <h2>🔐 Login Admin</h2>
-  <input id="user" placeholder="Usuário">
-  <input id="pass" type="password" placeholder="Senha">
-  <button class="btn btn-green" onclick="login()">Entrar</button>
+
+  <input
+    id="loginUser"
+    placeholder="Usuário"
+    style="width:100%;padding:10px;margin-bottom:8px"
+  >
+
+  <input
+    id="loginPass"
+    type="password"
+    placeholder="Senha"
+    style="width:100%;padding:10px;margin-bottom:12px"
+  >
+
+  <button class="btn btn-green" onclick="login()" style="width:100%">
+    Entrar
+  </button>
 </section>
 
-<!-- ADMIN -->
-<section id="admin" class="hidden">
+<!-- ================= ADMIN ================= -->
+<section id="admin" class="hidden" style="padding:20px">
 
   <h2>⚙️ Painel Admin</h2>
 
-  <!-- LOJA -->
+  <!-- ================= LOJA ================= -->
   <h3>🏪 Dados da Loja</h3>
+
   <input id="storeName" placeholder="Nome da loja">
   <input id="storePhone" placeholder="WhatsApp (ex: 5562993343622)">
-  <button class="btn btn-green" onclick="saveStore()">Salvar Loja</button>
+
+  <button class="btn btn-green" onclick="saveStore()">
+    Salvar Loja
+  </button>
 
   <hr>
 
-  <!-- PRODUTO -->
-  <h3>🍕 Produto</h3>
-  <input id="prodName" placeholder="Nome">
+  <!-- ================= CATEGORIAS ================= -->
+  <h3>📂 Categorias</h3>
+
+  <input id="catName" placeholder="Nova categoria">
+  <button class="btn btn-green" onclick="addCategory()">Adicionar</button>
+
+  <div id="catList"></div>
+
+  <hr>
+
+  <!-- ================= PRODUTOS ================= -->
+  <h3>🍕 Produtos</h3>
+
+  <input id="prodName" placeholder="Nome do produto">
   <input id="prodDesc" placeholder="Descrição">
-
-  <input id="priceP" type="number" placeholder="Preço P">
-  <input id="priceM" type="number" placeholder="Preço M">
-  <input id="priceG" type="number" placeholder="Preço G">
-
+  <input id="prodPrice" type="number" placeholder="Preço">
+  <select id="prodCat"></select>
+  <input id="prodFlavors" type="number" placeholder="Máx sabores (ex: 2)">
   <input id="prodImage" type="file">
 
-  <button class="btn btn-green" onclick="addProduct()">Adicionar Produto</button>
+  <label style="display:block;margin:8px 0">
+    <input type="checkbox" id="prodBest">
+    Mais pedido
+  </label>
+
+  <button class="btn btn-green" onclick="addProduct()">
+    Adicionar Produto
+  </button>
 
   <div id="productList"></div>
 
   <hr>
 
-  <!-- ADICIONAIS -->
+  <!-- ================= ADICIONAIS ================= -->
   <h3>➕ Adicionais</h3>
-  <input id="extraName" placeholder="Nome">
+
+  <input id="extraName" placeholder="Nome do adicional">
   <input id="extraPrice" type="number" placeholder="Preço">
-  <button class="btn btn-green" onclick="addExtra()">Adicionar</button>
+
+  <button class="btn btn-green" onclick="addExtra()">
+    Adicionar
+  </button>
+
   <div id="extraList"></div>
 
   <hr>
 
-  <!-- BORDAS -->
+  <!-- ================= BORDAS ================= -->
   <h3>🥖 Bordas</h3>
-  <input id="borderName" placeholder="Nome">
+
+  <input id="borderName" placeholder="Nome da borda">
   <input id="borderPrice" type="number" placeholder="Preço">
-  <button class="btn btn-green" onclick="addBorder()">Adicionar</button>
+
+  <button class="btn btn-green" onclick="addBorder()">
+    Adicionar
+  </button>
+
   <div id="borderList"></div>
 
   <hr>
 
-  <button class="btn btn-ghost" onclick="logout()">Sair</button>
+  <!-- ================= PROMO ================= -->
+  <h3>🔥 Promoção</h3>
+
+  <input id="promoDesc" placeholder="Descrição da promoção">
+  <input id="promoPrice" type="number" placeholder="Preço">
+  <input id="promoImage" type="file">
+
+  <button class="btn btn-green" onclick="savePromo()">
+    Salvar Promoção
+  </button>
+
+  <hr>
+
+  <button class="btn btn-ghost" onclick="logout()">
+    Sair
+  </button>
 
 </section>
 
-<script src="admin.js"></script>
+<!-- ================= SCRIPT ================= -->
+<script src="admin.js" defer></script>
+
 </body>
 </html>
