@@ -7,6 +7,7 @@ const DEFAULT_DATA = {
   store: { name: "Bella Massa", phone: "" },
   products: [],
   extras: [],
+  borders: [], // 🔥 bordas separadas
   promo: null,
   theme: "auto"
 };
@@ -19,13 +20,18 @@ function loadData() {
     store: { ...DEFAULT_DATA.store, ...(raw.store || {}) },
     products: Array.isArray(raw.products) ? raw.products : [],
     extras: Array.isArray(raw.extras) ? raw.extras : [],
+    borders: Array.isArray(raw.borders) ? raw.borders : [],
     promo: raw.promo || null
   };
 }
 
 let data = loadData();
 let cart = [];
+
+// estado temporário do pedido
 let selectedProduct = null;
+let selectedFlavors = [];
+let selectedExtras = [];
 
 // ==================================================
 // INIT
@@ -70,23 +76,22 @@ function renderCategories() {
   const nav = document.getElementById("categories");
   if (!nav) return;
 
-  const cats = [...new Set(
-    data.products.map(p => p.category).filter(Boolean)
-  )];
+  const categories = [
+    ...new Set(data.products.map(p => p.category).filter(Boolean))
+  ];
 
   nav.innerHTML = "";
-  if (!cats.length) return;
+  if (!categories.length) return;
 
-  cats.forEach((cat, i) => {
-    nav.insertAdjacentHTML("beforeend", `
-      <button data-action="category" data-category="${cat}"
-        class="${i === 0 ? "active" : ""}">
-        ${cat}
-      </button>
-    `);
+  categories.forEach((cat, i) => {
+    nav.insertAdjacentHTML(
+      "beforeend",
+      `<button data-action="category" data-category="${cat}"
+        class="${i === 0 ? "active" : ""}">${cat}</button>`
+    );
   });
 
-  renderProducts(cats[0]);
+  renderProducts(categories[0]);
 }
 
 // ==================================================
@@ -101,118 +106,233 @@ function renderProducts(category) {
   data.products
     .filter(p => p.category === category)
     .forEach(p => {
-      grid.insertAdjacentHTML("beforeend", `
-        <div class="product-card">
+      grid.insertAdjacentHTML(
+        "beforeend",
+        `<div class="product-card">
           ${p.best ? `<span class="badge">⭐ Mais pedido</span>` : ""}
           ${p.image ? `<img src="${p.image}" alt="${p.name}">` : ""}
           <h3>${p.name}</h3>
           <p>${p.desc || ""}</p>
           <div class="price">R$ ${p.price.toFixed(2)}</div>
           <button class="btn btn-green"
-            data-action="add-product"
+            data-action="start-order"
             data-id="${p.id}">
             Adicionar
           </button>
-        </div>
-      `);
+        </div>`
+      );
     });
 }
 
 // ==================================================
-// EVENT DELEGATION GLOBAL (🔥 IOS FIX)
+// EVENT DELEGATION (🔥 IOS SAFE)
 // ==================================================
 document.addEventListener("click", e => {
-  const btn = e.target.closest("[data-action]");
-  if (!btn) return;
+  const el = e.target.closest("[data-action]");
+  if (!el) return;
 
-  const action = btn.dataset.action;
+  const action = el.dataset.action;
 
   if (action === "category") {
     document
       .querySelectorAll(".categories button")
       .forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    renderProducts(btn.dataset.category);
+    el.classList.add("active");
+    renderProducts(el.dataset.category);
   }
 
-  if (action === "add-product") {
-    openExtras(Number(btn.dataset.id));
-  }
-
+  if (action === "start-order") startFlavors(Number(el.dataset.id));
+  if (action === "confirm-flavors") confirmFlavors();
   if (action === "confirm-extras") confirmExtras();
-  if (action === "close-modal") closeAnyModal();
+  if (action === "confirm-border") confirmBorder();
 
   if (action === "accept-promo") acceptPromo();
   if (action === "close-promo") closePromo();
+  if (action === "close-modal") closeAnyModal();
 
   if (action === "send-whats") sendToWhatsApp();
 });
 
 // ==================================================
-// ADICIONAIS
+// 1️⃣ SABORES (ATÉ 2)
 // ==================================================
-function openExtras(id) {
+function startFlavors(id) {
   selectedProduct = data.products.find(p => p.id === id);
   if (!selectedProduct) return;
 
+  selectedFlavors = [];
+  selectedExtras = [];
+
+  closeAnyModal();
+
+  const flavors = data.products.filter(
+    p => p.category === selectedProduct.category
+  );
+
+  const max = selectedProduct.maxFlavors || 2;
+
+  const modal = document.createElement("div");
+  modal.className = "promo-overlay";
+  modal.innerHTML = `
+    <div class="promo-card">
+      <h3>🍕 Escolha até ${max} sabores</h3>
+
+      ${flavors
+        .map(
+          f => `
+        <label class="extra-item">
+          <input type="checkbox" value="${f.name}">
+          <span>${f.name}</span>
+        </label>`
+        )
+        .join("")}
+
+      <button class="btn btn-green" data-action="confirm-flavors">
+        Continuar
+      </button>
+      <button class="btn btn-ghost" data-action="close-modal">Cancelar</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+function confirmFlavors() {
+  const checks = [...document.querySelectorAll(".promo-card input:checked")];
+  const max = selectedProduct.maxFlavors || 2;
+
+  if (!checks.length) return alert("Escolha pelo menos 1 sabor");
+  if (checks.length > max) return alert(`Máximo de ${max} sabores`);
+
+  selectedFlavors = checks.map(c => c.value);
+  openExtras();
+}
+
+// ==================================================
+// 2️⃣ ADICIONAIS
+// ==================================================
+function openExtras() {
   closeAnyModal();
 
   const extras = data.extras.filter(e => e.active);
 
   const modal = document.createElement("div");
   modal.className = "promo-overlay";
-
   modal.innerHTML = `
     <div class="promo-card">
       <h3>➕ Adicionais</h3>
 
       ${
         extras.length
-          ? extras.map(e => `
-            <label class="extra-item">
-              <input type="checkbox" value="${e.id}">
-              <span>${e.name}</span>
-              <strong>R$ ${e.price.toFixed(2)}</strong>
-            </label>
-          `).join("")
-          : `<p style="opacity:.6">Nenhum adicional disponível</p>`
+          ? extras
+              .map(
+                e => `
+          <label class="extra-item">
+            <input type="checkbox" value="${e.id}">
+            <span>${e.name}</span>
+            <strong>R$ ${e.price.toFixed(2)}</strong>
+          </label>`
+              )
+              .join("")
+          : `<p style="opacity:.6">Nenhum adicional</p>`
       }
 
       <button class="btn btn-green" data-action="confirm-extras">
-        Adicionar ao pedido
+        Continuar
       </button>
-      <button class="btn btn-ghost" data-action="close-modal">
-        Cancelar
-      </button>
+      <button class="btn btn-ghost" data-action="close-modal">Cancelar</button>
     </div>
   `;
-
   document.body.appendChild(modal);
 }
 
 function confirmExtras() {
-  if (!selectedProduct) return;
-
-  cart.push({ ...selectedProduct });
+  selectedExtras = [];
 
   document
     .querySelectorAll(".promo-card input:checked")
     .forEach(chk => {
       const extra = data.extras.find(e => e.id == chk.value);
-      if (extra) cart.push({ ...extra });
+      if (extra) selectedExtras.push(extra);
     });
 
+  openBorders();
+}
+
+// ==================================================
+// 3️⃣ BORDA
+// ==================================================
+function openBorders() {
+  closeAnyModal();
+
+  const borders = data.borders.filter(b => b.active);
+
+  const modal = document.createElement("div");
+  modal.className = "promo-overlay";
+  modal.innerHTML = `
+    <div class="promo-card">
+      <h3>🥖 Borda</h3>
+
+      <label class="extra-item">
+        <input type="radio" name="border" value="none" checked>
+        <span>Sem borda</span>
+        <strong>R$ 0,00</strong>
+      </label>
+
+      ${borders
+        .map(
+          b => `
+        <label class="extra-item">
+          <input type="radio" name="border" value="${b.id}">
+          <span>${b.name}</span>
+          <strong>R$ ${b.price.toFixed(2)}</strong>
+        </label>`
+        )
+        .join("")}
+
+      <button class="btn btn-green" data-action="confirm-border">
+        Adicionar ao pedido
+      </button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+function confirmBorder() {
+  const selected = document.querySelector(
+    '.promo-card input[name="border"]:checked'
+  );
+
+  let total = selectedProduct.price;
+  let name = `${selectedProduct.name} (${selectedFlavors.join(" / ")})`;
+
+  selectedExtras.forEach(e => {
+    total += e.price;
+    name += ` + ${e.name}`;
+  });
+
+  if (selected && selected.value !== "none") {
+    const border = data.borders.find(b => b.id == selected.value);
+    if (border) {
+      total += border.price;
+      name += ` • Borda ${border.name}`;
+    }
+  }
+
+  cart.push({ name, price: total });
+
   selectedProduct = null;
+  selectedFlavors = [];
+  selectedExtras = [];
+
   closeAnyModal();
   renderCart();
 }
 
 // ==================================================
-// PROMOÇÃO DO DIA
+// PROMOÇÃO
 // ==================================================
 function renderPromo() {
-  if (!data.promo || !data.promo.active || typeof data.promo.price !== "number")
-    return;
+  if (!data.promo || !data.promo.active) return;
 
   const key = "promoClosed-" + new Date().toISOString().slice(0, 10);
   if (localStorage.getItem(key)) return;
@@ -221,39 +341,33 @@ function renderPromo() {
 
   const modal = document.createElement("div");
   modal.className = "promo-overlay";
-
   modal.innerHTML = `
     <div class="promo-card">
       ${data.promo.image ? `<img src="${data.promo.image}">` : ""}
       <h2>🔥 Promoção do Dia</h2>
-      <p>${data.promo.description || ""}</p>
+      <p>${data.promo.description}</p>
       <strong>R$ ${data.promo.price.toFixed(2)}</strong>
 
-      <button class="btn btn-green" data-action="accept-promo">
-        Aproveitar
-      </button>
-      <button class="btn btn-ghost" data-action="close-promo">
-        Depois
-      </button>
+      <button class="btn btn-green" data-action="accept-promo">Aproveitar</button>
+      <button class="btn btn-ghost" data-action="close-promo">Depois</button>
     </div>
   `;
-
   document.body.appendChild(modal);
+}
+
+function acceptPromo() {
+  cart.push({
+    name: data.promo.description,
+    price: data.promo.price
+  });
+  closePromo();
+  renderCart();
 }
 
 function closePromo() {
   const key = "promoClosed-" + new Date().toISOString().slice(0, 10);
   localStorage.setItem(key, "1");
   closeAnyModal();
-}
-
-function acceptPromo() {
-  cart.push({
-    name: data.promo.description || "Promoção do Dia",
-    price: data.promo.price
-  });
-  closePromo();
-  renderCart();
 }
 
 // ==================================================
@@ -302,10 +416,7 @@ function sendToWhatsApp() {
 
   msg += `%0ATotal: R$ ${total.toFixed(2)}`;
 
-  window.open(
-    `https://wa.me/${data.store.phone}?text=${msg}`,
-    "_blank"
-  );
+  window.open(`https://wa.me/${data.store.phone}?text=${msg}`, "_blank");
 }
 
 // ==================================================

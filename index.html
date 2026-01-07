@@ -30,7 +30,7 @@
 
 <!-- ================= CARRINHO ================= -->
 <aside id="cart" class="cart hidden" aria-label="Carrinho">
-  <!-- preenchido pelo JS -->
+  <!-- preenchido pelo app.js -->
 </aside>
 
 <!-- ================= BOTÃO FLUTUANTE ================= -->
@@ -38,25 +38,27 @@
   🟢 Ver pedido
 </button>
 
-<!-- ================= CONTAINER ÚNICO DE MODAIS ================= -->
-<div id="modal-root"></div>
+<!-- ================= MODAIS (CRIADOS PELO JS) ================= -->
+<!-- app.js injeta .promo-overlay direto no body -->
 
 <!-- ================= SCRIPTS ================= -->
-<script src="app.js" defer></script>
+<script src="app.js"></script>
 
 <script>
+  // Inicialização única e segura
   document.addEventListener("DOMContentLoaded", () => {
     if (window.app && typeof window.app.renderPublic === "function") {
       window.app.renderPublic();
     }
 
-    // Controle único do carrinho (SEM conflito)
     const btnCart = document.getElementById("btn-cart");
     const cart = document.getElementById("cart");
 
-    btnCart.addEventListener("click", () => {
-      cart.classList.toggle("hidden");
-    });
+    if (btnCart && cart) {
+      btnCart.addEventListener("click", () => {
+        cart.classList.toggle("hidden");
+      });
+    }
   });
 </script>
 

@@ -1,5 +1,7 @@
 <script>
-/* ================= CONFIG ================= */
+/* ==================================================
+   CONFIG
+================================================== */
 const KEY = "pizzaria-data";
 
 const DEFAULT_DATA = {
@@ -7,41 +9,57 @@ const DEFAULT_DATA = {
   categories: [],
   products: [],
   extras: [],
+  borders: [],
   promo: null,
   theme: "auto"
 };
 
-/* ================= DOM READY ================= */
+/* ==================================================
+   DOM READY (ANTI TELA BRANCA REAL)
+================================================== */
 document.addEventListener("DOMContentLoaded", () => {
-  window.loginDiv = document.getElementById("login");
-  window.adminDiv = document.getElementById("admin");
+  const safe = id => document.getElementById(id) || null;
 
-  window.storeName = document.getElementById("storeName");
-  window.storePhone = document.getElementById("storePhone");
+  window.loginDiv   = safe("login");
+  window.adminDiv   = safe("admin");
 
-  window.catName = document.getElementById("catName");
-  window.catList = document.getElementById("catList");
+  window.storeName  = safe("storeName");
+  window.storePhone = safe("storePhone");
 
-  window.prodName = document.getElementById("prodName");
-  window.prodDesc = document.getElementById("prodDesc");
-  window.prodPrice = document.getElementById("prodPrice");
-  window.prodCat = document.getElementById("prodCat");
-  window.prodImage = document.getElementById("prodImage");
-  window.prodBest = document.getElementById("prodBest");
-  window.productList = document.getElementById("productList");
+  window.catName = safe("catName");
+  window.catList = safe("catList");
 
-  window.extraName = document.getElementById("extraName");
-  window.extraPrice = document.getElementById("extraPrice");
-  window.extraList = document.getElementById("extraList");
+  window.prodName    = safe("prodName");
+  window.prodDesc    = safe("prodDesc");
+  window.prodPrice   = safe("prodPrice");
+  window.prodCat     = safe("prodCat");
+  window.prodImage   = safe("prodImage");
+  window.prodBest    = safe("prodBest");
+  window.prodFlavors = safe("prodFlavors");
+  window.productList = safe("productList");
 
-  window.promoDesc = document.getElementById("promoDesc");
-  window.promoPrice = document.getElementById("promoPrice");
-  window.promoImage = document.getElementById("promoImage");
+  window.extraName  = safe("extraName");
+  window.extraPrice = safe("extraPrice");
+  window.extraList  = safe("extraList");
+
+  window.borderName  = safe("borderName");
+  window.borderPrice = safe("borderPrice");
+  window.borderList  = safe("borderList");
+
+  window.promoDesc  = safe("promoDesc");
+  window.promoPrice = safe("promoPrice");
+  window.promoImage = safe("promoImage");
 });
 
-/* ================= STORAGE ================= */
+/* ==================================================
+   STORAGE SEGURO
+================================================== */
 function loadDB() {
-  const raw = JSON.parse(localStorage.getItem(KEY)) || {};
+  let raw = {};
+  try {
+    raw = JSON.parse(localStorage.getItem(KEY)) || {};
+  } catch {}
+
   return {
     ...DEFAULT_DATA,
     ...raw,
@@ -49,6 +67,7 @@ function loadDB() {
     categories: Array.isArray(raw.categories) ? raw.categories : [],
     products: Array.isArray(raw.products) ? raw.products : [],
     extras: Array.isArray(raw.extras) ? raw.extras : [],
+    borders: Array.isArray(raw.borders) ? raw.borders : [],
     promo: raw.promo || null
   };
 }
@@ -57,10 +76,12 @@ function saveDB(data) {
   localStorage.setItem(KEY, JSON.stringify(data));
 }
 
-/* ================= LOGIN ================= */
+/* ==================================================
+   LOGIN
+================================================== */
 function login() {
-  loginDiv.classList.add("hidden");
-  adminDiv.classList.remove("hidden");
+  if (loginDiv) loginDiv.classList.add("hidden");
+  if (adminDiv) adminDiv.classList.remove("hidden");
   loadAdmin();
 }
 
@@ -68,28 +89,37 @@ function logout() {
   location.reload();
 }
 
-/* ================= LOAD ADMIN ================= */
+/* ==================================================
+   LOAD ADMIN
+================================================== */
 function loadAdmin() {
   const d = loadDB();
-  storeName.value = d.store.name || "";
-  storePhone.value = d.store.phone || "";
+
+  if (storeName)  storeName.value  = d.store.name || "";
+  if (storePhone) storePhone.value = d.store.phone || "";
+
   renderCategories();
   renderProducts();
   renderExtras();
+  renderBorders();
 }
 
-/* ================= STORE ================= */
+/* ==================================================
+   STORE
+================================================== */
 function saveStore() {
   const d = loadDB();
-  d.store.name = storeName.value.trim();
-  d.store.phone = storePhone.value.trim();
+  if (storeName)  d.store.name  = storeName.value.trim();
+  if (storePhone) d.store.phone = storePhone.value.trim();
   saveDB(d);
   alert("Dados da loja salvos");
 }
 
-/* ================= CATEGORIAS ================= */
+/* ==================================================
+   CATEGORIAS
+================================================== */
 function addCategory() {
-  if (!catName.value.trim()) return alert("Digite a categoria");
+  if (!catName || !catName.value.trim()) return alert("Digite a categoria");
 
   const d = loadDB();
   if (!d.categories.includes(catName.value.trim())) {
@@ -101,6 +131,8 @@ function addCategory() {
 }
 
 function renderCategories() {
+  if (!catList || !prodCat) return;
+
   const d = loadDB();
   catList.innerHTML = "";
   prodCat.innerHTML = "";
@@ -111,11 +143,12 @@ function renderCategories() {
   });
 }
 
-/* ================= PRODUTOS ================= */
+/* ==================================================
+   PRODUTOS
+================================================== */
 function addProduct() {
-  if (!prodName.value || !prodPrice.value || !prodCat.value || !prodImage.files[0]) {
+  if (!prodName || !prodPrice || !prodCat || !prodImage || !prodImage.files[0])
     return alert("Preencha todos os campos");
-  }
 
   const d = loadDB();
   const reader = new FileReader();
@@ -124,11 +157,12 @@ function addProduct() {
     d.products.push({
       id: Date.now(),
       name: prodName.value.trim(),
-      desc: prodDesc.value.trim(),
+      desc: prodDesc ? prodDesc.value.trim() : "",
       price: Number(prodPrice.value),
       category: prodCat.value,
       image: reader.result,
-      best: prodBest.checked
+      best: prodBest ? prodBest.checked : false,
+      maxFlavors: prodFlavors ? Number(prodFlavors.value) || 2 : 2
     });
 
     saveDB(d);
@@ -140,18 +174,23 @@ function addProduct() {
 }
 
 function renderProducts() {
+  if (!productList) return;
+
   const d = loadDB();
   productList.innerHTML = "";
 
   d.products.forEach(p => {
-    productList.innerHTML += `<p>${p.name} — R$ ${p.price.toFixed(2)}</p>`;
+    productList.innerHTML += `
+      <p>${p.name} — R$ ${p.price.toFixed(2)}
+      <small>(até ${p.maxFlavors} sabores)</small></p>`;
   });
 }
 
-/* ================= ADICIONAIS ================= */
+/* ==================================================
+   ADICIONAIS
+================================================== */
 function addExtra() {
-  if (!extraName.value || !extraPrice.value)
-    return alert("Preencha o adicional");
+  if (!extraName || !extraPrice) return alert("Preencha o adicional");
 
   const d = loadDB();
   d.extras.push({
@@ -168,6 +207,8 @@ function addExtra() {
 }
 
 function renderExtras() {
+  if (!extraList) return;
+
   const d = loadDB();
   extraList.innerHTML = "";
 
@@ -175,28 +216,71 @@ function renderExtras() {
     extraList.innerHTML += `
       <div class="extra-item">
         <strong>${e.name}</strong>
-        <label>
-          <input type="checkbox" ${e.active ? "checked" : ""}
-            onchange="toggleExtra(${e.id}, this.checked)">
-          Ativo
-        </label>
-      </div>
-    `;
+        <input type="checkbox" ${e.active ? "checked" : ""}
+        onchange="toggleExtra(${e.id},this.checked)">
+      </div>`;
   });
 }
 
 function toggleExtra(id, active) {
   const d = loadDB();
-  const extra = d.extras.find(e => e.id === id);
-  if (extra) {
-    extra.active = active;
+  const e = d.extras.find(x => x.id === id);
+  if (e) {
+    e.active = active;
     saveDB(d);
   }
 }
 
-/* ================= PROMO ================= */
+/* ==================================================
+   BORDAS
+================================================== */
+function addBorder() {
+  if (!borderName || !borderPrice) return alert("Preencha a borda");
+
+  const d = loadDB();
+  d.borders.push({
+    id: Date.now(),
+    name: borderName.value.trim(),
+    price: Number(borderPrice.value),
+    active: true
+  });
+
+  saveDB(d);
+  borderName.value = "";
+  borderPrice.value = "";
+  renderBorders();
+}
+
+function renderBorders() {
+  if (!borderList) return;
+
+  const d = loadDB();
+  borderList.innerHTML = "";
+
+  d.borders.forEach(b => {
+    borderList.innerHTML += `
+      <div class="extra-item">
+        <strong>${b.name}</strong>
+        <input type="checkbox" ${b.active ? "checked" : ""}
+        onchange="toggleBorder(${b.id},this.checked)">
+      </div>`;
+  });
+}
+
+function toggleBorder(id, active) {
+  const d = loadDB();
+  const b = d.borders.find(x => x.id === id);
+  if (b) {
+    b.active = active;
+    saveDB(d);
+  }
+}
+
+/* ==================================================
+   PROMOÇÃO
+================================================== */
 function savePromo() {
-  if (!promoDesc.value || !promoPrice.value || !promoImage.files[0])
+  if (!promoDesc || !promoPrice || !promoImage || !promoImage.files[0])
     return alert("Preencha a promoção");
 
   const d = loadDB();
