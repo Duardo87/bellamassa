@@ -227,13 +227,49 @@ function renderBorders() {
 // PROMO
 // ==================================================
 function savePromo() {
+  const descEl = $("promoDesc");
+  const priceEl = $("promoPrice");
+  const imgEl = $("promoImage");
+
+  const description = descEl.value.trim();
+  const price = Number(priceEl.value);
+
+  if (!description) {
+    alert("Digite a descrição da promoção");
+    return;
+  }
+
+  if (!isFinite(price) || price <= 0) {
+    alert("Digite um preço válido");
+    return;
+  }
+
   const d = loadDB();
-  d.promo = {
-    active: true,
-    description: $("promoDesc").value.trim(),
-    price: Number($("promoPrice").value),
-    image: null
+
+  const save = (imgData) => {
+    d.promo = {
+      active: true,
+      description,
+      price,
+      image: imgData || null
+    };
+
+    saveDB(d);
+    alert("Promoção salva com sucesso 🔥");
+
+    // limpa campos
+    descEl.value = "";
+    priceEl.value = "";
+    if (imgEl) imgEl.value = "";
   };
-  saveDB(d);
-  alert("Promoção salva");
+
+  const file = imgEl && imgEl.files && imgEl.files[0];
+  if (file) {
+    const r = new FileReader();
+    r.onload = () => save(r.result);
+    r.onerror = () => save(null);
+    r.readAsDataURL(file);
+  } else {
+    save(null);
+  }
 }
