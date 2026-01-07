@@ -296,4 +296,53 @@ body {
   .products-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+}/* =====================================================
+   PROMO / COMBO DO DIA — AJUSTE DE IMAGEM
+===================================================== */
+.promo-card img {
+  width: 100%;
+  max-height: 220px;      /* impede imagem gigante */
+  object-fit: cover;      /* corta sem distorcer */
+  border-radius: 14px;
+  display: block;
+  margin-bottom: 12px;
+}
+
+/* Mobile mais seguro */
+@media (max-width: 480px) {
+  .promo-card img {
+    max-height: 180px;
+  }
+}
+
+/* =====================================================
+   CONTADOR DE URGÊNCIA (VISUAL)
+   Use dentro da promo-card
+===================================================== */
+.promo-urgency {
+  background: linear-gradient(135deg, #ff3b3b, #c70000);
+  color: #fff;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin: 10px 0 14px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 14px;
+  box-shadow: var(--shadow-soft);
+  animation: pulseUrgency 1.5s infinite;
+}
+
+/* texto menor embaixo */
+.promo-urgency small {
+  display: block;
+  font-size: 12px;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+/* animação leve (não incomoda) */
+@keyframes pulseUrgency {
+  0%   { transform: scale(1);   }
+  50%  { transform: scale(1.03);}
+  100% { transform: scale(1);   }
 }

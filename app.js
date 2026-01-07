@@ -71,7 +71,10 @@ function renderPromo() {
   if (!data.promo) return;
 
   openModal(`
-    ${data.promo.image ? `<img src="${data.promo.image}" alt="Promoção">` : ""}
+    ${data.promo.image ? `<img src="${data.promo.image}" alt="Promoção">` : ""}<div class="promo-urgency">
+  ⏰ Promoção por tempo limitado
+  <small>Somente hoje • Enquanto durar o estoque</small>
+</div>
     <h2>🔥 Promoção do Dia</h2>
     <p>${data.promo.description}</p>
     <strong>R$ ${Number(data.promo.price).toFixed(2)}</strong>
