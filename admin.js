@@ -57,8 +57,7 @@ function normalizeDB(raw = {}) {
 
 function loadDB() {
   try {
-    const raw = JSON.parse(localStorage.getItem(KEY)) || {};
-    return normalizeDB(raw);
+    return normalizeDB(JSON.parse(localStorage.getItem(KEY)) || {});
   } catch {
     return normalizeDB();
   }
@@ -94,7 +93,7 @@ function saveStore() {
 }
 
 // ==================================================
-// CATEGORIES
+// CATEGORIES (EDITAR / APAGAR)
 // ==================================================
 function addCategory() {
   const d = loadDB();
@@ -112,10 +111,59 @@ function addCategory() {
 
 function renderCategories() {
   const d = loadDB();
-  $("catList").innerHTML = d.categories.map(c => `<p>${c}</p>`).join("");
+
+  $("catList").innerHTML = d.categories.map((c, i) => `
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+      <input
+        value="${c}"
+        style="flex:1"
+        onchange="editCategory(${i}, this.value)"
+      >
+      <button class="btn-del" onclick="deleteCategory(${i})">🗑</button>
+    </div>
+  `).join("");
+
   $("prodCat").innerHTML =
     `<option value="">Selecione</option>` +
     d.categories.map(c => `<option value="${c}">${c}</option>`).join("");
+}
+
+function editCategory(index, newName) {
+  const d = loadDB();
+  newName = newName.trim();
+  if (!newName) return;
+
+  const oldName = d.categories[index];
+  d.categories[index] = newName;
+
+  // atualiza produtos ligados à categoria
+  d.products.forEach(p => {
+    if (p.category === oldName) {
+      p.category = newName;
+    }
+  });
+
+  saveDB(d);
+  renderCategories();
+}
+
+function deleteCategory(index) {
+  if (!confirm("Excluir esta categoria?")) return;
+
+  const d = loadDB();
+  const removed = d.categories[index];
+  d.categories.splice(index, 1);
+
+  // remove categoria dos produtos
+  d.products.forEach(p => {
+    if (p.category === removed) {
+      p.category = "";
+    }
+  });
+
+  saveDB(d);
+  renderCategories();
+  renderProducts();
 }
 
 // ==================================================
@@ -154,18 +202,13 @@ function addProduct() {
 
 function renderProducts() {
   const d = loadDB();
-  const list = $("productList");
-
-  list.innerHTML = d.products.map((p, i) => `
+  $("productList").innerHTML = d.products.map((p, i) => `
     <div style="border-bottom:1px solid #eee;padding:10px 0">
       <input value="${p.name}" onchange="editProduct(${p.id},'name',this.value)">
       <input value="${p.desc || ""}" onchange="editProduct(${p.id},'desc',this.value)">
       <input type="number" value="${p.maxFlavors}" onchange="editProduct(${p.id},'maxFlavors',this.value)">
-
       <div style="margin-top:6px">
-        <button onclick="toggleProduct(${p.id})">
-          ${p.active ? "⏸ Pausar" : "▶️ Ativar"}
-        </button>
+        <button onclick="toggleProduct(${p.id})">${p.active ? "⏸ Pausar" : "▶️ Ativar"}</button>
         <button onclick="moveProduct(${i},-1)">⬆️</button>
         <button onclick="moveProduct(${i},1)">⬇️</button>
         <button onclick="deleteProduct(${p.id})">🗑</button>
@@ -178,7 +221,6 @@ function editProduct(id, field, value) {
   const d = loadDB();
   const p = d.products.find(p => p.id === id);
   if (!p) return;
-
   p[field] = field === "maxFlavors" ? Number(value) : value;
   saveDB(d);
 }
@@ -186,8 +228,6 @@ function editProduct(id, field, value) {
 function toggleProduct(id) {
   const d = loadDB();
   const p = d.products.find(p => p.id === id);
-  if (!p) return;
-
   p.active = !p.active;
   saveDB(d);
   renderProducts();
@@ -206,7 +246,6 @@ function moveProduct(index, dir) {
   const arr = d.products;
   const newIndex = index + dir;
   if (newIndex < 0 || newIndex >= arr.length) return;
-
   [arr[index], arr[newIndex]] = [arr[newIndex], arr[index]];
   saveDB(d);
   renderProducts();
@@ -217,19 +256,15 @@ function moveProduct(index, dir) {
 // ==================================================
 function savePromo() {
   const d = loadDB();
-
   const desc = $("promoDesc").value.trim();
   const price = Number($("promoPrice").value);
   const imgEl = $("promoImage");
 
-  if (!desc || !price) {
-    alert("Preencha descrição e preço");
-    return;
-  }
+  if (!desc || !price) return alert("Preencha descrição e preço");
 
   const save = img => {
     d.promo = {
-      active: d.promo.active ?? false,
+      ...d.promo,
       description: desc,
       price,
       image: img
@@ -239,7 +274,7 @@ function savePromo() {
     alert("Promoção salva");
   };
 
-  const file = imgEl && imgEl.files && imgEl.files[0];
+  const file = imgEl?.files?.[0];
   if (file) {
     const r = new FileReader();
     r.onload = () => save(r.result);
@@ -260,10 +295,7 @@ function renderPromo() {
   const d = loadDB();
   const el = $("promoStatus");
   if (!el) return;
-
   el.textContent = d.promo.active ? "ATIVA" : "PAUSADA";
-  el.className =
-    "status-badge " + (d.promo.active ? "status-on" : "status-off");
 }
 
 // ==================================================
@@ -271,8 +303,6 @@ function renderPromo() {
 // ==================================================
 function renderOrders() {
   const orders = JSON.parse(localStorage.getItem(ORDERS_KEY) || "[]");
-  if (!$("ordersSummary")) return;
-
   let total = 0;
   orders.forEach(o => total += o.total || 0);
 
