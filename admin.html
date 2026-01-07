@@ -1,302 +1,90 @@
-<script>
-/* ==================================================
-   CONFIG
-================================================== */
-const KEY = "pizzaria-data";
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Admin • Bella Massa</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+</head>
 
-const DEFAULT_DATA = {
-  store: { name: "", phone: "" },
-  categories: [],
-  products: [],
-  extras: [],
-  borders: [],
-  promo: null,
-  theme: "auto"
-};
+<body>
 
-/* ==================================================
-   DOM READY (ANTI TELA BRANCA REAL)
-================================================== */
-document.addEventListener("DOMContentLoaded", () => {
-  const safe = id => document.getElementById(id) || null;
+<!-- ================= LOGIN ================= -->
+<section id="login">
+  <h2>🔐 Login Admin</h2>
+  <button class="btn btn-green" onclick="login()">Entrar</button>
+</section>
 
-  window.loginDiv   = safe("login");
-  window.adminDiv   = safe("admin");
+<!-- ================= ADMIN ================= -->
+<section id="admin" class="hidden">
 
-  window.storeName  = safe("storeName");
-  window.storePhone = safe("storePhone");
+  <h2>⚙️ Painel Admin</h2>
 
-  window.catName = safe("catName");
-  window.catList = safe("catList");
+  <!-- LOJA -->
+  <h3>🏪 Dados da Loja</h3>
+  <input id="storeName" placeholder="Nome da loja">
+  <input id="storePhone" placeholder="WhatsApp (ex: 5511999999999)">
+  <button class="btn btn-green" onclick="saveStore()">Salvar Loja</button>
 
-  window.prodName    = safe("prodName");
-  window.prodDesc    = safe("prodDesc");
-  window.prodPrice   = safe("prodPrice");
-  window.prodCat     = safe("prodCat");
-  window.prodImage   = safe("prodImage");
-  window.prodBest    = safe("prodBest");
-  window.prodFlavors = safe("prodFlavors");
-  window.productList = safe("productList");
+  <hr>
 
-  window.extraName  = safe("extraName");
-  window.extraPrice = safe("extraPrice");
-  window.extraList  = safe("extraList");
+  <!-- CATEGORIAS -->
+  <h3>📂 Categorias</h3>
+  <input id="catName" placeholder="Nova categoria">
+  <button class="btn btn-green" onclick="addCategory()">Adicionar</button>
+  <div id="catList"></div>
 
-  window.borderName  = safe("borderName");
-  window.borderPrice = safe("borderPrice");
-  window.borderList  = safe("borderList");
+  <hr>
 
-  window.promoDesc  = safe("promoDesc");
-  window.promoPrice = safe("promoPrice");
-  window.promoImage = safe("promoImage");
-});
+  <!-- PRODUTOS -->
+  <h3>🍕 Produtos</h3>
+  <input id="prodName" placeholder="Nome">
+  <input id="prodDesc" placeholder="Descrição">
+  <input id="prodPrice" type="number" placeholder="Preço">
+  <select id="prodCat"></select>
+  <input id="prodFlavors" type="number" placeholder="Máx sabores (ex: 2)">
+  <input id="prodImage" type="file">
+  <label>
+    <input type="checkbox" id="prodBest"> Mais pedido
+  </label>
+  <button class="btn btn-green" onclick="addProduct()">Adicionar Produto</button>
+  <div id="productList"></div>
 
-/* ==================================================
-   STORAGE SEGURO
-================================================== */
-function loadDB() {
-  let raw = {};
-  try {
-    raw = JSON.parse(localStorage.getItem(KEY)) || {};
-  } catch {}
+  <hr>
 
-  return {
-    ...DEFAULT_DATA,
-    ...raw,
-    store: { ...DEFAULT_DATA.store, ...(raw.store || {}) },
-    categories: Array.isArray(raw.categories) ? raw.categories : [],
-    products: Array.isArray(raw.products) ? raw.products : [],
-    extras: Array.isArray(raw.extras) ? raw.extras : [],
-    borders: Array.isArray(raw.borders) ? raw.borders : [],
-    promo: raw.promo || null
-  };
-}
+  <!-- ADICIONAIS -->
+  <h3>➕ Adicionais</h3>
+  <input id="extraName" placeholder="Nome do adicional">
+  <input id="extraPrice" type="number" placeholder="Preço">
+  <button class="btn btn-green" onclick="addExtra()">Adicionar</button>
+  <div id="extraList"></div>
 
-function saveDB(data) {
-  localStorage.setItem(KEY, JSON.stringify(data));
-}
+  <hr>
 
-/* ==================================================
-   LOGIN
-================================================== */
-function login() {
-  if (loginDiv) loginDiv.classList.add("hidden");
-  if (adminDiv) adminDiv.classList.remove("hidden");
-  loadAdmin();
-}
+  <!-- BORDAS -->
+  <h3>🥖 Bordas</h3>
+  <input id="borderName" placeholder="Nome da borda">
+  <input id="borderPrice" type="number" placeholder="Preço">
+  <button class="btn btn-green" onclick="addBorder()">Adicionar</button>
+  <div id="borderList"></div>
 
-function logout() {
-  location.reload();
-}
+  <hr>
 
-/* ==================================================
-   LOAD ADMIN
-================================================== */
-function loadAdmin() {
-  const d = loadDB();
+  <!-- PROMO -->
+  <h3>🔥 Promoção</h3>
+  <input id="promoDesc" placeholder="Descrição">
+  <input id="promoPrice" type="number" placeholder="Preço">
+  <input id="promoImage" type="file">
+  <button class="btn btn-green" onclick="savePromo()">Salvar Promo</button>
 
-  if (storeName)  storeName.value  = d.store.name || "";
-  if (storePhone) storePhone.value = d.store.phone || "";
+  <hr>
 
-  renderCategories();
-  renderProducts();
-  renderExtras();
-  renderBorders();
-}
+  <button class="btn btn-ghost" onclick="logout()">Sair</button>
 
-/* ==================================================
-   STORE
-================================================== */
-function saveStore() {
-  const d = loadDB();
-  if (storeName)  d.store.name  = storeName.value.trim();
-  if (storePhone) d.store.phone = storePhone.value.trim();
-  saveDB(d);
-  alert("Dados da loja salvos");
-}
+</section>
 
-/* ==================================================
-   CATEGORIAS
-================================================== */
-function addCategory() {
-  if (!catName || !catName.value.trim()) return alert("Digite a categoria");
+<!-- SCRIPT ADMIN (OBRIGATÓRIO SER EXTERNO) -->
+<script src="admin.js" defer></script>
 
-  const d = loadDB();
-  if (!d.categories.includes(catName.value.trim())) {
-    d.categories.push(catName.value.trim());
-    saveDB(d);
-  }
-  catName.value = "";
-  renderCategories();
-}
-
-function renderCategories() {
-  if (!catList || !prodCat) return;
-
-  const d = loadDB();
-  catList.innerHTML = "";
-  prodCat.innerHTML = "";
-
-  d.categories.forEach(cat => {
-    catList.innerHTML += `<p>${cat}</p>`;
-    prodCat.innerHTML += `<option value="${cat}">${cat}</option>`;
-  });
-}
-
-/* ==================================================
-   PRODUTOS
-================================================== */
-function addProduct() {
-  if (!prodName || !prodPrice || !prodCat || !prodImage || !prodImage.files[0])
-    return alert("Preencha todos os campos");
-
-  const d = loadDB();
-  const reader = new FileReader();
-
-  reader.onload = () => {
-    d.products.push({
-      id: Date.now(),
-      name: prodName.value.trim(),
-      desc: prodDesc ? prodDesc.value.trim() : "",
-      price: Number(prodPrice.value),
-      category: prodCat.value,
-      image: reader.result,
-      best: prodBest ? prodBest.checked : false,
-      maxFlavors: prodFlavors ? Number(prodFlavors.value) || 2 : 2
-    });
-
-    saveDB(d);
-    renderProducts();
-    alert("Produto adicionado");
-  };
-
-  reader.readAsDataURL(prodImage.files[0]);
-}
-
-function renderProducts() {
-  if (!productList) return;
-
-  const d = loadDB();
-  productList.innerHTML = "";
-
-  d.products.forEach(p => {
-    productList.innerHTML += `
-      <p>${p.name} — R$ ${p.price.toFixed(2)}
-      <small>(até ${p.maxFlavors} sabores)</small></p>`;
-  });
-}
-
-/* ==================================================
-   ADICIONAIS
-================================================== */
-function addExtra() {
-  if (!extraName || !extraPrice) return alert("Preencha o adicional");
-
-  const d = loadDB();
-  d.extras.push({
-    id: Date.now(),
-    name: extraName.value.trim(),
-    price: Number(extraPrice.value),
-    active: true
-  });
-
-  saveDB(d);
-  extraName.value = "";
-  extraPrice.value = "";
-  renderExtras();
-}
-
-function renderExtras() {
-  if (!extraList) return;
-
-  const d = loadDB();
-  extraList.innerHTML = "";
-
-  d.extras.forEach(e => {
-    extraList.innerHTML += `
-      <div class="extra-item">
-        <strong>${e.name}</strong>
-        <input type="checkbox" ${e.active ? "checked" : ""}
-        onchange="toggleExtra(${e.id},this.checked)">
-      </div>`;
-  });
-}
-
-function toggleExtra(id, active) {
-  const d = loadDB();
-  const e = d.extras.find(x => x.id === id);
-  if (e) {
-    e.active = active;
-    saveDB(d);
-  }
-}
-
-/* ==================================================
-   BORDAS
-================================================== */
-function addBorder() {
-  if (!borderName || !borderPrice) return alert("Preencha a borda");
-
-  const d = loadDB();
-  d.borders.push({
-    id: Date.now(),
-    name: borderName.value.trim(),
-    price: Number(borderPrice.value),
-    active: true
-  });
-
-  saveDB(d);
-  borderName.value = "";
-  borderPrice.value = "";
-  renderBorders();
-}
-
-function renderBorders() {
-  if (!borderList) return;
-
-  const d = loadDB();
-  borderList.innerHTML = "";
-
-  d.borders.forEach(b => {
-    borderList.innerHTML += `
-      <div class="extra-item">
-        <strong>${b.name}</strong>
-        <input type="checkbox" ${b.active ? "checked" : ""}
-        onchange="toggleBorder(${b.id},this.checked)">
-      </div>`;
-  });
-}
-
-function toggleBorder(id, active) {
-  const d = loadDB();
-  const b = d.borders.find(x => x.id === id);
-  if (b) {
-    b.active = active;
-    saveDB(d);
-  }
-}
-
-/* ==================================================
-   PROMOÇÃO
-================================================== */
-function savePromo() {
-  if (!promoDesc || !promoPrice || !promoImage || !promoImage.files[0])
-    return alert("Preencha a promoção");
-
-  const d = loadDB();
-  const reader = new FileReader();
-
-  reader.onload = () => {
-    d.promo = {
-      active: true,
-      description: promoDesc.value.trim(),
-      price: Number(promoPrice.value),
-      image: reader.result
-    };
-    saveDB(d);
-    alert("Promoção salva");
-  };
-
-  reader.readAsDataURL(promoImage.files[0]);
-}
-</script>
+</body>
+</html>

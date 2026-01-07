@@ -1,5 +1,5 @@
 // ==================================================
-// CONFIG / STORAGE
+// CONFIG / STORAGE (SEGURO)
 // ==================================================
 const STORAGE_KEY = "pizzaria-data";
 
@@ -7,13 +7,19 @@ const DEFAULT_DATA = {
   store: { name: "Bella Massa", phone: "" },
   products: [],
   extras: [],
-  borders: [], // 🔥 bordas separadas
+  borders: [],
   promo: null,
   theme: "auto"
 };
 
 function loadData() {
-  const raw = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+  let raw = {};
+  try {
+    raw = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+  } catch {
+    raw = {};
+  }
+
   return {
     ...DEFAULT_DATA,
     ...raw,
@@ -25,10 +31,12 @@ function loadData() {
   };
 }
 
+// ==================================================
+// STATE
+// ==================================================
 let data = loadData();
 let cart = [];
 
-// estado temporário do pedido
 let selectedProduct = null;
 let selectedFlavors = [];
 let selectedExtras = [];
@@ -41,7 +49,7 @@ function renderPublic() {
   applyTheme();
   renderHeader();
   renderCategories();
-  renderPromo();
+  setTimeout(renderPromo, 300); // evita conflito DOM
 }
 
 window.app = { renderPublic };
@@ -99,7 +107,7 @@ function renderCategories() {
 // ==================================================
 function renderProducts(category) {
   const grid = document.getElementById("products");
-  if (!grid) return;
+  if (!grid || !category) return;
 
   grid.innerHTML = "";
 
@@ -125,7 +133,7 @@ function renderProducts(category) {
 }
 
 // ==================================================
-// EVENT DELEGATION (🔥 IOS SAFE)
+// EVENT DELEGATION GLOBAL
 // ==================================================
 document.addEventListener("click", e => {
   const el = e.target.closest("[data-action]");
@@ -154,7 +162,7 @@ document.addEventListener("click", e => {
 });
 
 // ==================================================
-// 1️⃣ SABORES (ATÉ 2)
+// 1️⃣ SABORES
 // ==================================================
 function startFlavors(id) {
   selectedProduct = data.products.find(p => p.id === id);
@@ -171,29 +179,16 @@ function startFlavors(id) {
 
   const max = selectedProduct.maxFlavors || 2;
 
-  const modal = document.createElement("div");
-  modal.className = "promo-overlay";
-  modal.innerHTML = `
-    <div class="promo-card">
-      <h3>🍕 Escolha até ${max} sabores</h3>
-
-      ${flavors
-        .map(
-          f => `
-        <label class="extra-item">
-          <input type="checkbox" value="${f.name}">
-          <span>${f.name}</span>
-        </label>`
-        )
-        .join("")}
-
-      <button class="btn btn-green" data-action="confirm-flavors">
-        Continuar
-      </button>
-      <button class="btn btn-ghost" data-action="close-modal">Cancelar</button>
-    </div>
-  `;
-  document.body.appendChild(modal);
+  openModal(`
+    <h3>🍕 Escolha até ${max} sabores</h3>
+    ${flavors.map(f => `
+      <label class="extra-item">
+        <input type="checkbox" value="${f.name}">
+        <span>${f.name}</span>
+      </label>`).join("")}
+    <button class="btn btn-green" data-action="confirm-flavors">Continuar</button>
+    <button class="btn btn-ghost" data-action="close-modal">Cancelar</button>
+  `);
 }
 
 function confirmFlavors() {
@@ -211,49 +206,28 @@ function confirmFlavors() {
 // 2️⃣ ADICIONAIS
 // ==================================================
 function openExtras() {
-  closeAnyModal();
-
   const extras = data.extras.filter(e => e.active);
 
-  const modal = document.createElement("div");
-  modal.className = "promo-overlay";
-  modal.innerHTML = `
-    <div class="promo-card">
-      <h3>➕ Adicionais</h3>
-
-      ${
-        extras.length
-          ? extras
-              .map(
-                e => `
-          <label class="extra-item">
-            <input type="checkbox" value="${e.id}">
-            <span>${e.name}</span>
-            <strong>R$ ${e.price.toFixed(2)}</strong>
-          </label>`
-              )
-              .join("")
-          : `<p style="opacity:.6">Nenhum adicional</p>`
-      }
-
-      <button class="btn btn-green" data-action="confirm-extras">
-        Continuar
-      </button>
-      <button class="btn btn-ghost" data-action="close-modal">Cancelar</button>
-    </div>
-  `;
-  document.body.appendChild(modal);
+  openModal(`
+    <h3>➕ Adicionais</h3>
+    ${extras.length ? extras.map(e => `
+      <label class="extra-item">
+        <input type="checkbox" value="${e.id}">
+        <span>${e.name}</span>
+        <strong>R$ ${e.price.toFixed(2)}</strong>
+      </label>`).join("") : "<p>Nenhum adicional</p>"}
+    <button class="btn btn-green" data-action="confirm-extras">Continuar</button>
+    <button class="btn btn-ghost" data-action="close-modal">Cancelar</button>
+  `);
 }
 
 function confirmExtras() {
   selectedExtras = [];
 
-  document
-    .querySelectorAll(".promo-card input:checked")
-    .forEach(chk => {
-      const extra = data.extras.find(e => e.id == chk.value);
-      if (extra) selectedExtras.push(extra);
-    });
+  document.querySelectorAll(".promo-card input:checked").forEach(chk => {
+    const e = data.extras.find(x => x.id == chk.value);
+    if (e) selectedExtras.push(e);
+  });
 
   openBorders();
 }
@@ -262,45 +236,27 @@ function confirmExtras() {
 // 3️⃣ BORDA
 // ==================================================
 function openBorders() {
-  closeAnyModal();
-
   const borders = data.borders.filter(b => b.active);
 
-  const modal = document.createElement("div");
-  modal.className = "promo-overlay";
-  modal.innerHTML = `
-    <div class="promo-card">
-      <h3>🥖 Borda</h3>
-
+  openModal(`
+    <h3>🥖 Borda</h3>
+    <label class="extra-item">
+      <input type="radio" name="border" value="none" checked>
+      <span>Sem borda</span>
+      <strong>R$ 0,00</strong>
+    </label>
+    ${borders.map(b => `
       <label class="extra-item">
-        <input type="radio" name="border" value="none" checked>
-        <span>Sem borda</span>
-        <strong>R$ 0,00</strong>
-      </label>
-
-      ${borders
-        .map(
-          b => `
-        <label class="extra-item">
-          <input type="radio" name="border" value="${b.id}">
-          <span>${b.name}</span>
-          <strong>R$ ${b.price.toFixed(2)}</strong>
-        </label>`
-        )
-        .join("")}
-
-      <button class="btn btn-green" data-action="confirm-border">
-        Adicionar ao pedido
-      </button>
-    </div>
-  `;
-  document.body.appendChild(modal);
+        <input type="radio" name="border" value="${b.id}">
+        <span>${b.name}</span>
+        <strong>R$ ${b.price.toFixed(2)}</strong>
+      </label>`).join("")}
+    <button class="btn btn-green" data-action="confirm-border">Adicionar ao pedido</button>
+  `);
 }
 
 function confirmBorder() {
-  const selected = document.querySelector(
-    '.promo-card input[name="border"]:checked'
-  );
+  const selected = document.querySelector('input[name="border"]:checked');
 
   let total = selectedProduct.price;
   let name = `${selectedProduct.name} (${selectedFlavors.join(" / ")})`;
@@ -311,20 +267,16 @@ function confirmBorder() {
   });
 
   if (selected && selected.value !== "none") {
-    const border = data.borders.find(b => b.id == selected.value);
-    if (border) {
-      total += border.price;
-      name += ` • Borda ${border.name}`;
+    const b = data.borders.find(x => x.id == selected.value);
+    if (b) {
+      total += b.price;
+      name += ` • Borda ${b.name}`;
     }
   }
 
   cart.push({ name, price: total });
 
-  selectedProduct = null;
-  selectedFlavors = [];
-  selectedExtras = [];
-
-  closeAnyModal();
+  resetOrder();
   renderCart();
 }
 
@@ -337,29 +289,18 @@ function renderPromo() {
   const key = "promoClosed-" + new Date().toISOString().slice(0, 10);
   if (localStorage.getItem(key)) return;
 
-  closeAnyModal();
-
-  const modal = document.createElement("div");
-  modal.className = "promo-overlay";
-  modal.innerHTML = `
-    <div class="promo-card">
-      ${data.promo.image ? `<img src="${data.promo.image}">` : ""}
-      <h2>🔥 Promoção do Dia</h2>
-      <p>${data.promo.description}</p>
-      <strong>R$ ${data.promo.price.toFixed(2)}</strong>
-
-      <button class="btn btn-green" data-action="accept-promo">Aproveitar</button>
-      <button class="btn btn-ghost" data-action="close-promo">Depois</button>
-    </div>
-  `;
-  document.body.appendChild(modal);
+  openModal(`
+    ${data.promo.image ? `<img src="${data.promo.image}">` : ""}
+    <h2>🔥 Promoção do Dia</h2>
+    <p>${data.promo.description}</p>
+    <strong>R$ ${data.promo.price.toFixed(2)}</strong>
+    <button class="btn btn-green" data-action="accept-promo">Aproveitar</button>
+    <button class="btn btn-ghost" data-action="close-promo">Depois</button>
+  `);
 }
 
 function acceptPromo() {
-  cart.push({
-    name: data.promo.description,
-    price: data.promo.price
-  });
+  cart.push({ name: data.promo.description, price: data.promo.price });
   closePromo();
   renderCart();
 }
@@ -389,9 +330,7 @@ function renderCart() {
 
   html += `
     <strong>Total: R$ ${total.toFixed(2)}</strong>
-    <button class="btn btn-green" data-action="send-whats">
-      Enviar no WhatsApp
-    </button>
+    <button class="btn btn-green" data-action="send-whats">Enviar no WhatsApp</button>
   `;
 
   div.innerHTML = html;
@@ -401,10 +340,7 @@ function renderCart() {
 // WHATSAPP
 // ==================================================
 function sendToWhatsApp() {
-  if (!data.store.phone) {
-    alert("WhatsApp não configurado no admin");
-    return;
-  }
+  if (!data.store.phone) return alert("WhatsApp não configurado");
 
   let msg = `Pedido - ${data.store.name}%0A%0A`;
   let total = 0;
@@ -422,6 +358,20 @@ function sendToWhatsApp() {
 // ==================================================
 // UTIL
 // ==================================================
+function openModal(content) {
+  closeAnyModal();
+  const modal = document.createElement("div");
+  modal.className = "promo-overlay";
+  modal.innerHTML = `<div class="promo-card">${content}</div>`;
+  document.body.appendChild(modal);
+}
+
 function closeAnyModal() {
   document.querySelectorAll(".promo-overlay").forEach(m => m.remove());
+}
+
+function resetOrder() {
+  selectedProduct = null;
+  selectedFlavors = [];
+  selectedExtras = [];
 }

@@ -22,8 +22,13 @@
 }
 
 /* =====================================================
-   BASE
+   BASE (ANTI TELA BRANCA)
 ===================================================== */
+html, body {
+  width: 100%;
+  min-height: 100vh;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial;
@@ -56,8 +61,7 @@ body.dark .site-header {
   padding: 16px;
   position: sticky;
   top: 0;
-  z-index: 8000;
-  box-shadow: 0 4px 12px rgba(0,0,0,.25);
+  z-index: 100;
 }
 
 /* =====================================================
@@ -80,7 +84,6 @@ body.dark .site-header {
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
-  touch-action: manipulation;
 }
 
 .categories button.active {
@@ -103,7 +106,6 @@ body.dark .site-header {
   border-radius: var(--radius);
   padding: 14px;
   box-shadow: var(--shadow-soft);
-  position: relative;
 }
 
 .product-card img {
@@ -124,16 +126,13 @@ body.dark .site-header {
 }
 
 /* =====================================================
-   BOTÕES (FIX IOS DEFINITIVO)
+   BOTÕES
 ===================================================== */
 .btn,
 .whats-float {
-  -webkit-appearance: none;
   appearance: none;
   border: none;
   cursor: pointer;
-  touch-action: manipulation;
-  pointer-events: auto;
 }
 
 .btn {
@@ -155,7 +154,7 @@ body.dark .site-header {
 }
 
 /* =====================================================
-   MODAL / OVERLAY (🔥 FIX DEFINITIVO IOS)
+   MODAL / OVERLAY (IOS SAFE)
 ===================================================== */
 .promo-overlay {
   position: fixed;
@@ -164,8 +163,8 @@ body.dark .site-header {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10000;
-  pointer-events: auto;
+  z-index: 500;
+  overflow: hidden;
 }
 
 .promo-card {
@@ -176,17 +175,8 @@ body.dark .site-header {
   max-height: 85vh;
   overflow-y: auto;
   padding: 14px;
-  pointer-events: auto;
 }
 
-/* garante clique interno */
-.promo-card,
-.promo-card * {
-  pointer-events: auto;
-  touch-action: manipulation;
-}
-
-/* imagem promo */
 .promo-card img {
   width: 100%;
   max-height: 180px;
@@ -219,8 +209,7 @@ body.dark .site-header {
   padding: 14px;
   width: 260px;
   box-shadow: var(--shadow-strong);
-  z-index: 9000;
-  pointer-events: auto;
+  z-index: 300;
 }
 
 /* =====================================================
@@ -235,7 +224,7 @@ body.dark .site-header {
   padding: 16px 22px;
   border-radius: 999px;
   font-weight: bold;
-  z-index: 9500;
+  z-index: 400;
 }
 
 /* =====================================================
