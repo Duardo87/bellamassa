@@ -54,21 +54,31 @@ function logout() {
 }
 
 // ==================================================
-// STORAGE
+// STORAGE (NORMALIZADO — NÃO SOME MAIS)
 // ==================================================
+function normalizeDB(raw) {
+  return {
+    store: raw.store || { ...DEFAULT_DATA.store },
+    categories: Array.isArray(raw.categories) ? raw.categories : [],
+    products: Array.isArray(raw.products) ? raw.products : [],
+    extras: Array.isArray(raw.extras) ? raw.extras : [],
+    borders: Array.isArray(raw.borders) ? raw.borders : [],
+    promo: raw.promo || null
+  };
+}
+
 function loadDB() {
   try {
-    return {
-      ...DEFAULT_DATA,
-      ...JSON.parse(localStorage.getItem(KEY) || "{}")
-    };
+    const raw = JSON.parse(localStorage.getItem(KEY) || "{}");
+    return normalizeDB(raw);
   } catch {
     return { ...DEFAULT_DATA };
   }
 }
 
 function saveDB(data) {
-  localStorage.setItem(KEY, JSON.stringify(data));
+  const safeData = normalizeDB(data);
+  localStorage.setItem(KEY, JSON.stringify(safeData));
 }
 
 // ==================================================
@@ -107,7 +117,9 @@ function addCategory() {
   if (!name) return alert("Digite a categoria");
 
   const d = loadDB();
-  if (!d.categories.includes(name)) d.categories.push(name);
+  if (!d.categories.includes(name)) {
+    d.categories.push(name);
+  }
   saveDB(d);
 
   $("catName").value = "";
@@ -123,7 +135,7 @@ function renderCategories() {
 }
 
 // ==================================================
-// PRODUTOS (SEM PREÇO)
+// PRODUTOS
 // ==================================================
 function addProduct() {
   const name = $("prodName").value.trim();
