@@ -5,7 +5,6 @@ const ADMIN_USER = "admin";
 const ADMIN_PASS = "123456";
 
 const KEY = "pizzaria-data";
-const ORDERS_KEY = "pizzaria-orders";
 
 // ==================================================
 // HELPERS
@@ -54,16 +53,16 @@ function logout() {
 }
 
 // ==================================================
-// STORAGE (NORMALIZADO — NÃO SOME MAIS)
+// STORAGE — CORRIGIDO (PROMO NÃO SOME MAIS)
 // ==================================================
-function normalizeDB(raw) {
+function normalizeDB(raw = {}) {
   return {
     store: raw.store || { ...DEFAULT_DATA.store },
     categories: Array.isArray(raw.categories) ? raw.categories : [],
     products: Array.isArray(raw.products) ? raw.products : [],
     extras: Array.isArray(raw.extras) ? raw.extras : [],
     borders: Array.isArray(raw.borders) ? raw.borders : [],
-    promo: raw.promo || null
+    promo: raw.promo && raw.promo.active ? raw.promo : null
   };
 }
 
@@ -77,8 +76,16 @@ function loadDB() {
 }
 
 function saveDB(data) {
-  const safeData = normalizeDB(data);
-  localStorage.setItem(KEY, JSON.stringify(safeData));
+  const current = loadDB();
+
+  // merge seguro — NÃO apaga promo existente
+  const merged = {
+    ...current,
+    ...data,
+    promo: data.promo !== undefined ? data.promo : current.promo
+  };
+
+  localStorage.setItem(KEY, JSON.stringify(normalizeDB(merged)));
 }
 
 // ==================================================
@@ -117,9 +124,7 @@ function addCategory() {
   if (!name) return alert("Digite a categoria");
 
   const d = loadDB();
-  if (!d.categories.includes(name)) {
-    d.categories.push(name);
-  }
+  if (!d.categories.includes(name)) d.categories.push(name);
   saveDB(d);
 
   $("catName").value = "";
@@ -224,50 +229,36 @@ function renderBorders() {
 }
 
 // ==================================================
-// PROMO
+// PROMO — AGORA FUNCIONA DEFINITIVO
 // ==================================================
 function savePromo() {
-  const descEl = $("promoDesc");
-  const priceEl = $("promoPrice");
+  const desc = $("promoDesc").value.trim();
+  const price = Number($("promoPrice").value);
   const imgEl = $("promoImage");
 
-  const description = descEl.value.trim();
-  const price = Number(priceEl.value);
-
-  if (!description) {
-    alert("Digite a descrição da promoção");
-    return;
-  }
-
-  if (!isFinite(price) || price <= 0) {
-    alert("Digite um preço válido");
-    return;
-  }
+  if (!desc) return alert("Digite a descrição da promoção");
+  if (!isFinite(price) || price <= 0) return alert("Digite um preço válido");
 
   const d = loadDB();
 
-  const save = (imgData) => {
+  const save = img => {
     d.promo = {
       active: true,
-      description,
+      description: desc,
       price,
-      image: imgData || null
+      image: img || null
     };
-
     saveDB(d);
     alert("Promoção salva com sucesso 🔥");
-
-    // limpa campos
-    descEl.value = "";
-    priceEl.value = "";
+    $("promoDesc").value = "";
+    $("promoPrice").value = "";
     if (imgEl) imgEl.value = "";
   };
 
-  const file = imgEl && imgEl.files && imgEl.files[0];
+  const file = imgEl?.files?.[0];
   if (file) {
     const r = new FileReader();
     r.onload = () => save(r.result);
-    r.onerror = () => save(null);
     r.readAsDataURL(file);
   } else {
     save(null);
