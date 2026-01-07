@@ -7,6 +7,46 @@
 
   <!-- CSS GLOBAL -->
   <link rel="stylesheet" href="styles.css">
+
+  <style>
+    .admin-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,.08);
+    }
+
+    .admin-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .admin-actions button {
+      padding: 6px 10px;
+      font-size: 13px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-pause { background: #f1c40f; color:#000; }
+    .btn-play  { background: #2ecc71; color:#fff; }
+    .btn-del   { background: #e74c3c; color:#fff; }
+    .btn-move  { background: #ecf0f1; }
+
+    input, select {
+      margin-bottom: 6px;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #eee;
+      margin: 16px 0;
+    }
+  </style>
 </head>
 
 <body>
@@ -15,155 +55,74 @@
 <section id="login" style="padding:20px;max-width:420px;margin:auto">
   <h2>🔐 Login Admin</h2>
 
-  <form onsubmit="login();return false">
-    <input
-      id="loginUser"
-      placeholder="Usuário"
-      autocomplete="username"
-      required
-    >
+  <input id="loginUser" placeholder="Usuário">
+  <input id="loginPass" type="password" placeholder="Senha">
 
-    <input
-      id="loginPass"
-      type="password"
-      placeholder="Senha"
-      autocomplete="current-password"
-      required
-    >
-
-    <button class="btn btn-green" type="submit">
-      Entrar
-    </button>
-  </form>
-
-  <p style="margin-top:10px;font-size:13px;color:#666">
-    Use <strong>admin</strong> / <strong>123456</strong> (teste).
-  </p>
+  <button class="btn btn-green" onclick="login()">Entrar</button>
 </section>
 
 <!-- ================= ADMIN ================= -->
 <section id="admin" class="hidden" style="padding:20px;max-width:900px;margin:auto">
 
-  <header style="display:flex;justify-content:space-between;align-items:center">
+  <div style="display:flex;justify-content:space-between;align-items:center">
     <h2>⚙️ Painel Admin</h2>
     <button class="btn btn-ghost btn-small" onclick="logout()">Sair</button>
-  </header>
+  </div>
 
-  <!-- ================= LOJA ================= -->
-  <section>
+  <!-- LOJA -->
+  <div class="admin-card">
     <h3>🏪 Dados da Loja</h3>
+    <input id="storeName" placeholder="Nome da loja">
+    <input id="storePhone" placeholder="WhatsApp (DDD + número)">
+    <button class="btn btn-green" onclick="saveStore()">Salvar Loja</button>
+  </div>
 
-    <input id="storeName" placeholder="Nome da loja" required>
-    <input id="storePhone" placeholder="WhatsApp (ex: 5562993343622)" required>
-
-    <button class="btn btn-green" onclick="saveStore()">
-      Salvar Loja
-    </button>
-  </section>
-
-  <hr>
-
-  <!-- ================= CATEGORIAS ================= -->
-  <section>
+  <!-- CATEGORIAS -->
+  <div class="admin-card">
     <h3>📂 Categorias</h3>
-
-    <input id="catName" placeholder="Nova categoria" required>
+    <input id="catName" placeholder="Nova categoria">
     <button class="btn btn-green" onclick="addCategory()">Adicionar</button>
+    <div id="catList"></div>
+  </div>
 
-    <div id="catList" style="margin-top:10px"></div>
-  </section>
-
-  <hr>
-
-  <!-- ================= PRODUTOS ================= -->
-  <section>
+  <!-- PRODUTOS -->
+  <div class="admin-card">
     <h3>🍕 Produtos</h3>
 
-    <input id="prodName" placeholder="Nome do produto" required>
+    <input id="prodName" placeholder="Nome do produto">
     <input id="prodDesc" placeholder="Descrição">
+    <select id="prodCat"></select>
+    <input id="prodFlavors" type="number" placeholder="Máx sabores">
+    <input id="prodImage" type="file">
 
-    <select id="prodCat" required></select>
+    <button class="btn btn-green" onclick="addProduct()">Adicionar Produto</button>
 
-    <input
-      id="prodFlavors"
-      type="number"
-      min="1"
-      placeholder="Máx sabores (ex: 2)"
-    >
+    <hr>
+    <div id="productList"></div>
+  </div>
 
-    <input
-      id="prodImage"
-      type="file"
-      accept="image/*"
-    >
-
-    <label style="display:block;margin:8px 0">
-      <input type="checkbox" id="prodBest">
-      Mais pedido
-    </label>
-
-    <small style="color:#777">
-      💡 O preço é definido pelo tamanho (P / M / G) no site.
-    </small>
-
-    <button class="btn btn-green" onclick="addProduct()">
-      Adicionar Produto
-    </button>
-
-    <div id="productList" style="margin-top:12px"></div>
-  </section>
-
-  <hr>
-
-  <!-- ================= ADICIONAIS ================= -->
-  <section>
-    <h3>➕ Adicionais</h3>
-
-    <input id="extraName" placeholder="Nome do adicional" required>
-    <input id="extraPrice" type="number" placeholder="Preço" min="0" step="0.01" required>
-
-    <button class="btn btn-green" onclick="addExtra()">
-      Adicionar
-    </button>
-
-    <div id="extraList" style="margin-top:10px"></div>
-  </section>
-
-  <hr>
-
-  <!-- ================= BORDAS ================= -->
-  <section>
-    <h3>🥖 Bordas</h3>
-
-    <input id="borderName" placeholder="Nome da borda" required>
-    <input id="borderPrice" type="number" placeholder="Preço" min="0" step="0.01" required>
-
-    <button class="btn btn-green" onclick="addBorder()">
-      Adicionar
-    </button>
-
-    <div id="borderList" style="margin-top:10px"></div>
-  </section>
-
-  <hr>
-
-  <!-- ================= PROMO ================= -->
-  <section>
+  <!-- PROMOÇÃO -->
+  <div class="admin-card">
     <h3>🔥 Promoção do Dia</h3>
+    <p>Status: <strong id="promoStatus">—</strong></p>
 
     <input id="promoDesc" placeholder="Descrição da promoção">
-    <input id="promoPrice" type="number" placeholder="Preço" min="0" step="0.01">
-    <input id="promoImage" type="file" accept="image/*">
+    <input id="promoPrice" type="number" placeholder="Preço">
 
-    <button class="btn btn-green" onclick="savePromo()">
-      Salvar Promoção
-    </button>
-  </section>
+    <div class="admin-actions">
+      <button class="btn btn-green" onclick="savePromo()">Salvar</button>
+      <button class="btn btn-ghost" onclick="togglePromo()">Ativar / Pausar</button>
+    </div>
+  </div>
+
+  <!-- PEDIDOS -->
+  <div class="admin-card">
+    <h3>📊 Resumo de Pedidos</h3>
+    <div id="ordersSummary"></div>
+  </div>
 
 </section>
 
-<!-- ================= SCRIPT ================= -->
 <script src="admin.js" defer></script>
-
 </body>
 </html>

@@ -1,12 +1,28 @@
-// ================= CONFIG =================
+// ==================================================
+// CONFIG
+// ==================================================
 const ADMIN_USER = "admin";
 const ADMIN_PASS = "123456";
 const KEY = "pizzaria-data";
+const ORDERS_KEY = "pizzaria-orders";
 
-// ================= HELPER =================
 const $ = id => document.getElementById(id);
 
-// ================= LOGIN =================
+// ==================================================
+// DEFAULT
+// ==================================================
+const DEFAULT_DATA = {
+  store: { name: "", phone: "" },
+  categories: [],
+  products: [],
+  extras: [],
+  borders: [],
+  promo: { active: false }
+};
+
+// ==================================================
+// AUTH
+// ==================================================
 function login() {
   if ($("loginUser").value !== ADMIN_USER || $("loginPass").value !== ADMIN_PASS) {
     return alert("Login inválido");
@@ -20,61 +36,54 @@ function logout() {
   location.reload();
 }
 
-// ================= STORAGE =================
+// ==================================================
+// STORAGE
+// ==================================================
 function loadDB() {
   try {
-    return JSON.parse(localStorage.getItem(KEY)) || {
-      store: {},
-      categories: [],
-      products: [],
-      extras: [],
-      borders: [],
-      promo: null
-    };
+    return { ...DEFAULT_DATA, ...JSON.parse(localStorage.getItem(KEY)) };
   } catch {
-    return {
-      store: {},
-      categories: [],
-      products: [],
-      extras: [],
-      borders: [],
-      promo: null
-    };
+    return { ...DEFAULT_DATA };
   }
 }
 
-function saveDB(data) {
-  localStorage.setItem(KEY, JSON.stringify(data));
+function saveDB(d) {
+  localStorage.setItem(KEY, JSON.stringify(d));
 }
 
-// ================= LOAD ADMIN =================
+// ==================================================
+// INIT
+// ==================================================
 function loadAdmin() {
   const d = loadDB();
-  $("storeName").value = d.store?.name || "";
-  $("storePhone").value = d.store?.phone || "";
+  $("storeName").value = d.store.name || "";
+  $("storePhone").value = d.store.phone || "";
   renderCategories();
   renderProducts();
-  renderExtras();
-  renderBorders();
+  renderPromo();
+  renderOrders();
 }
+window.loadAdmin = loadAdmin;
 
-// ================= STORE =================
+// ==================================================
+// STORE
+// ==================================================
 function saveStore() {
   const d = loadDB();
-  d.store = {
-    name: $("storeName").value.trim(),
-    phone: $("storePhone").value.replace(/\D/g, "")
-  };
+  d.store.name = $("storeName").value.trim();
+  d.store.phone = $("storePhone").value.replace(/\D/g, "");
   saveDB(d);
   alert("Loja salva");
 }
 
-// ================= CATEGORIAS =================
+// ==================================================
+// CATEGORIES
+// ==================================================
 function addCategory() {
   const d = loadDB();
   const name = $("catName").value.trim();
-  if (!name) return alert("Digite a categoria");
-  if (!d.categories.includes(name)) d.categories.push(name);
+  if (!name) return;
+  d.categories.push(name);
   saveDB(d);
   $("catName").value = "";
   renderCategories();
@@ -84,17 +93,18 @@ function renderCategories() {
   const d = loadDB();
   $("catList").innerHTML = d.categories.map(c => `<p>${c}</p>`).join("");
   $("prodCat").innerHTML =
-    `<option value="">Selecione...</option>` +
-    d.categories.map(c => `<option value="${c}">${c}</option>`).join("");
+    `<option value="">Selecione</option>` +
+    d.categories.map(c => `<option>${c}</option>`).join("");
 }
 
-// ================= PRODUTOS =================
+// ==================================================
+// PRODUCTS (INLINE EDIT)
+// ==================================================
 function addProduct() {
   const d = loadDB();
   const name = $("prodName").value.trim();
   const cat = $("prodCat").value;
-
-  if (!name || !cat) return alert("Preencha produto e categoria");
+  if (!name || !cat) return alert("Preencha nome e categoria");
 
   const save = img => {
     d.products.push({
@@ -102,13 +112,12 @@ function addProduct() {
       name,
       desc: $("prodDesc").value.trim(),
       category: cat,
-      image: img,
       maxFlavors: Number($("prodFlavors").value) || 2,
-      best: $("prodBest").checked
+      image: img,
+      active: true
     });
     saveDB(d);
     renderProducts();
-    alert("Produto salvo");
   };
 
   const file = $("prodImage").files[0];
@@ -116,84 +125,103 @@ function addProduct() {
     const r = new FileReader();
     r.onload = () => save(r.result);
     r.readAsDataURL(file);
-  } else {
-    save(null);
-  }
+  } else save(null);
 }
 
 function renderProducts() {
   const d = loadDB();
-  $("productList").innerHTML = d.products.map(p =>
-    `<p>${p.name} (até ${p.maxFlavors} sabores)</p>`
-  ).join("");
+  const list = $("productList");
+
+  list.innerHTML = d.products.map((p, i) => `
+    <div style="border-bottom:1px solid #eee;padding:8px 0">
+      <input value="${p.name}" onchange="editProduct(${p.id},'name',this.value)">
+      <input value="${p.desc || ""}" onchange="editProduct(${p.id},'desc',this.value)">
+      <input type="number" value="${p.maxFlavors}" onchange="editProduct(${p.id},'maxFlavors',this.value)">
+      
+      <button onclick="toggleProduct(${p.id})">
+        ${p.active ? "⏸ Pausar" : "▶️ Ativar"}
+      </button>
+
+      <button onclick="moveProduct(${i},-1)">⬆️</button>
+      <button onclick="moveProduct(${i},1)">⬇️</button>
+      <button onclick="deleteProduct(${p.id})">🗑</button>
+    </div>
+  `).join("");
 }
 
-// ================= EXTRAS =================
-function addExtra() {
+function editProduct(id, field, value) {
   const d = loadDB();
-  d.extras.push({
-    id: Date.now(),
-    name: $("extraName").value.trim(),
-    price: Number($("extraPrice").value),
-    active: true
-  });
+  const p = d.products.find(p => p.id === id);
+  if (!p) return;
+  p[field] = field === "maxFlavors" ? Number(value) : value;
   saveDB(d);
-  renderExtras();
 }
 
-function renderExtras() {
+function toggleProduct(id) {
   const d = loadDB();
-  $("extraList").innerHTML = d.extras.map(e =>
-    `<p>${e.name} — R$ ${e.price.toFixed(2)}</p>`
-  ).join("");
-}
-
-// ================= BORDAS =================
-function addBorder() {
-  const d = loadDB();
-  d.borders.push({
-    id: Date.now(),
-    name: $("borderName").value.trim(),
-    price: Number($("borderPrice").value),
-    active: true
-  });
+  const p = d.products.find(p => p.id === id);
+  p.active = !p.active;
   saveDB(d);
-  renderBorders();
+  renderProducts();
 }
 
-function renderBorders() {
+function deleteProduct(id) {
+  if (!confirm("Excluir produto?")) return;
   const d = loadDB();
-  $("borderList").innerHTML = d.borders.map(b =>
-    `<p>${b.name} — R$ ${b.price.toFixed(2)}</p>`
-  ).join("");
+  d.products = d.products.filter(p => p.id !== id);
+  saveDB(d);
+  renderProducts();
 }
 
-// ================= PROMO (100% FUNCIONAL) =================
+function moveProduct(index, dir) {
+  const d = loadDB();
+  const arr = d.products;
+  const newIndex = index + dir;
+  if (newIndex < 0 || newIndex >= arr.length) return;
+  [arr[index], arr[newIndex]] = [arr[newIndex], arr[index]];
+  saveDB(d);
+  renderProducts();
+}
+
+// ==================================================
+// PROMOÇÃO
+// ==================================================
 function savePromo() {
   const d = loadDB();
-  const desc = $("promoDesc").value.trim();
-  const price = Number($("promoPrice").value);
-  const img = $("promoImage").files[0];
-
-  if (!desc) return alert("Digite a descrição");
-  if (!price || price <= 0) return alert("Digite o preço");
-
-  const save = image => {
-    d.promo = {
-      active: true,
-      description: desc,
-      price,
-      image
-    };
-    saveDB(d);
-    alert("Promoção salva com sucesso 🔥");
+  d.promo = {
+    active: true,
+    description: $("promoDesc").value.trim(),
+    price: Number($("promoPrice").value)
   };
+  saveDB(d);
+  alert("Promoção salva");
+}
 
-  if (img) {
-    const r = new FileReader();
-    r.onload = () => save(r.result);
-    r.readAsDataURL(img);
-  } else {
-    save(null);
-  }
+function togglePromo() {
+  const d = loadDB();
+  d.promo.active = !d.promo.active;
+  saveDB(d);
+  renderPromo();
+}
+
+function renderPromo() {
+  const d = loadDB();
+  if (!$("promoStatus")) return;
+  $("promoStatus").innerHTML = d.promo?.active ? "🔥 ATIVA" : "⏸ PAUSADA";
+}
+
+// ==================================================
+// PEDIDOS
+// ==================================================
+function renderOrders() {
+  const orders = JSON.parse(localStorage.getItem(ORDERS_KEY) || "[]");
+  if (!$("ordersSummary")) return;
+
+  let total = 0;
+  orders.forEach(o => total += o.total || 0);
+
+  $("ordersSummary").innerHTML = `
+    <p>📦 Pedidos: ${orders.length}</p>
+    <p>💰 Faturamento: R$ ${total.toFixed(2)}</p>
+  `;
 }

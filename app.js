@@ -384,4 +384,4 @@ function openModal(html) {
 
 function closeModal() {
   document.querySelectorAll(".promo-overlay").forEach(m => m.remove());
-} 
+}
