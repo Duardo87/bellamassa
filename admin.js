@@ -168,14 +168,15 @@ function renderBorders() {
   ).join("");
 }
 
-// ================= PROMO (FUNCIONA 100%) =================
+// ================= PROMO (100% FUNCIONAL) =================
 function savePromo() {
   const d = loadDB();
   const desc = $("promoDesc").value.trim();
   const price = Number($("promoPrice").value);
   const img = $("promoImage").files[0];
 
-  if (!desc || !price) return alert("Preencha descrição e preço");
+  if (!desc) return alert("Digite a descrição");
+  if (!price || price <= 0) return alert("Digite o preço");
 
   const save = image => {
     d.promo = {
@@ -185,7 +186,7 @@ function savePromo() {
       image
     };
     saveDB(d);
-    alert("Promoção salva 🔥");
+    alert("Promoção salva com sucesso 🔥");
   };
 
   if (img) {

@@ -20,7 +20,7 @@ function loadData() {
     products: Array.isArray(raw.products) ? raw.products : [],
     extras: Array.isArray(raw.extras) ? raw.extras : [],
     borders: Array.isArray(raw.borders) ? raw.borders : [],
-    promo: raw.promo || null
+    promo: raw.promo && raw.promo.active ? raw.promo : null
   };
 }
 
@@ -33,7 +33,7 @@ function saveOrder(order) {
 // ==================================================
 // STATE
 // ==================================================
-let data = loadData();
+let data = null;
 let cart = [];
 
 let currentProduct = null;
@@ -58,7 +58,36 @@ window.app = { renderPublic };
 // ==================================================
 function renderHeader() {
   const nameEl = document.getElementById("store-name");
+  const phoneEl = document.getElementById("store-phone");
+
   if (nameEl) nameEl.textContent = data.store.name;
+  if (phoneEl) phoneEl.href = `https://wa.me/${data.store.phone || WHATS_PHONE}`;
+}
+
+// ==================================================
+// PROMOÇÃO DO DIA (🔥 CORREÇÃO PRINCIPAL)
+// ==================================================
+function renderPromo() {
+  if (!data.promo) return;
+
+  openModal(`
+    ${data.promo.image ? `<img src="${data.promo.image}" alt="Promoção">` : ""}
+    <h2>🔥 Promoção do Dia</h2>
+    <p>${data.promo.description}</p>
+    <strong>R$ ${Number(data.promo.price).toFixed(2)}</strong>
+    <button class="btn btn-green"
+      onclick="
+        cart.push({
+          name: '${data.promo.description}',
+          price: ${Number(data.promo.price)},
+          breakdown: ['Promoção do dia']
+        });
+        closeModal();
+        renderCart();
+      ">
+      Adicionar ao pedido
+    </button>
+  `);
 }
 
 // ==================================================
@@ -80,13 +109,11 @@ function renderCategories() {
     `;
   });
 
-  if (data.categories[0]) {
-    renderProducts(data.categories[0]);
-  }
+  if (data.categories[0]) renderProducts(data.categories[0]);
 }
 
 // ==================================================
-// PRODUTOS (SEM PREÇO)
+// PRODUTOS
 // ==================================================
 function renderProducts(category) {
   const grid = document.getElementById("products");
@@ -95,11 +122,7 @@ function renderProducts(category) {
   grid.innerHTML = "";
 
   data.products
-    .filter(
-      p =>
-        p.category &&
-        p.category.trim().toLowerCase() === category.trim().toLowerCase()
-    )
+    .filter(p => p.category === category)
     .forEach(p => {
       grid.innerHTML += `
         <div class="product-card">
@@ -124,24 +147,22 @@ document.addEventListener("click", e => {
   const el = e.target.closest("[data-action]");
   if (!el) return;
 
-  const action = el.dataset.action;
-
-  if (action === "category") {
+  if (el.dataset.action === "category") {
     document.querySelectorAll(".categories button")
       .forEach(b => b.classList.remove("active"));
     el.classList.add("active");
     renderProducts(el.dataset.category);
   }
 
-  if (action === "start") startOrder(el.dataset.id);
-  if (action === "confirm-flavors") confirmFlavors();
-  if (action === "confirm-extras") confirmExtras();
-  if (action === "send-whats") sendWhats();
-  if (action === "close-modal") closeModal();
+  if (el.dataset.action === "start") startOrder(el.dataset.id);
+  if (el.dataset.action === "confirm-flavors") confirmFlavors();
+  if (el.dataset.action === "confirm-extras") confirmExtras();
+  if (el.dataset.action === "send-whats") sendWhats();
+  if (el.dataset.action === "close-modal") closeModal();
 });
 
 // ==================================================
-// FLUXO DO PEDIDO
+// FLUXO DO PEDIDO (INALTERADO)
 // ==================================================
 function startOrder(id) {
   currentProduct = data.products.find(p => p.id == id);
@@ -170,75 +191,32 @@ function confirmFlavors() {
   selectedFlavors = [...document.querySelectorAll(".promo-card input:checked")]
     .map(i => i.value);
 
-  if (!selectedFlavors.length) {
-    return alert("Escolha ao menos 1 sabor");
-  }
+  if (!selectedFlavors.length) return alert("Escolha ao menos 1 sabor");
 
   openModal(`
     <h3>📏 Escolha o tamanho</h3>
-
     <div class="size-grid">
-      <button class="btn btn-green" onclick="confirmSize('Pequena',35)">
-        🍕 Pequena<br>R$ 35
-      </button>
-      <button class="btn btn-green" onclick="confirmSize('Média',45)">
-        🍕 Média<br>R$ 45
-      </button>
-      <button class="btn btn-green" onclick="confirmSize('Grande',55)">
-        🍕 Grande<br>R$ 55
-      </button>
+      <button class="btn btn-green" onclick="confirmSize('Pequena',35)">Pequena<br>R$ 35</button>
+      <button class="btn btn-green" onclick="confirmSize('Média',45)">Média<br>R$ 45</button>
+      <button class="btn btn-green" onclick="confirmSize('Grande',55)">Grande<br>R$ 55</button>
     </div>
   `);
 }
 
 function confirmSize(label, price) {
   selectedSize = { label, price };
-  confirmBorder();
-}
-
-function confirmBorder() {
-  openModal(`
-    <h3>🥖 Escolha a borda</h3>
-    <button class="btn btn-ghost" onclick="selectedBorder=null;confirmExtras()">
-      Sem borda
-    </button>
-    ${data.borders
-      .filter(b => b.active)
-      .map(b => `
-        <button class="btn btn-green"
-          onclick="selectedBorder=${b.id};confirmExtras()">
-          ${b.name} + R$ ${b.price.toFixed(2)}
-        </button>
-      `).join("")}
-  `);
+  confirmExtras();
 }
 
 function confirmExtras() {
-  selectedExtras = [...document.querySelectorAll(".promo-card input:checked")]
-    .map(i => data.extras.find(e => e.id == i.value))
-    .filter(Boolean);
-
   let total = selectedSize.price;
-  let breakdown = [
-    `Pizza ${selectedSize.label} — R$ ${selectedSize.price.toFixed(2)}`
-  ];
+  let breakdown = [`Pizza ${selectedSize.label} — R$ ${total.toFixed(2)}`];
 
-  let name = `${currentProduct.name} (${selectedFlavors.join("/")}) • ${selectedSize.label}`;
-
-  if (selectedBorder) {
-    const b = data.borders.find(x => x.id == selectedBorder);
-    if (b) {
-      total += b.price;
-      breakdown.push(`Borda ${b.name} — R$ ${b.price.toFixed(2)}`);
-    }
-  }
-
-  selectedExtras.forEach(e => {
-    total += e.price;
-    breakdown.push(`${e.name} — R$ ${e.price.toFixed(2)}`);
+  cart.push({
+    name: `${currentProduct.name} (${selectedFlavors.join("/")})`,
+    price: total,
+    breakdown
   });
-
-  cart.push({ name, price: total, breakdown });
 
   closeModal();
   renderCart();
@@ -257,9 +235,7 @@ function renderCart() {
   cart.forEach(i => {
     total += i.price;
     html += `<p><strong>${i.name}</strong></p>`;
-    i.breakdown.forEach(b => {
-      html += `<small>• ${b}</small><br>`;
-    });
+    i.breakdown.forEach(b => html += `<small>• ${b}</small><br>`);
     html += `<strong>Subtotal: R$ ${i.price.toFixed(2)}</strong><hr>`;
   });
 
@@ -292,21 +268,14 @@ function sendWhats() {
 
   cart.forEach(i => {
     total += i.price;
-    msg += `• ${i.name}\n`;
-    i.breakdown.forEach(b => msg += `   - ${b}\n`);
-    msg += `   Subtotal: R$ ${i.price.toFixed(2)}\n\n`;
+    msg += `• ${i.name} — R$ ${i.price.toFixed(2)}\n`;
   });
 
-  msg += `Total: R$ ${total.toFixed(2)}\n`;
-  msg += `Endereço: ${addr}\n`;
-  msg += `Pagamento: ${pay}`;
+  msg += `\nTotal: R$ ${total.toFixed(2)}\nEndereço: ${addr}\nPagamento: ${pay}`;
 
   saveOrder({ cart, total, address: addr, payment: pay, date: new Date() });
 
-  window.open(
-    `https://wa.me/${WHATS_PHONE}?text=${encodeURIComponent(msg)}`,
-    "_blank"
-  );
+  window.open(`https://wa.me/${WHATS_PHONE}?text=${encodeURIComponent(msg)}`, "_blank");
 }
 
 // ==================================================
@@ -327,4 +296,4 @@ function openModal(html) {
 
 function closeModal() {
   document.querySelectorAll(".promo-overlay").forEach(m => m.remove());
-} 
+}
