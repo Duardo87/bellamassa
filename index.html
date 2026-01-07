@@ -36,15 +36,17 @@
   <!-- ================= CATEGORIAS ================= -->
   <nav id="categories"
        class="categories"
-       aria-label="Categorias"
-       role="navigation">
+       aria-label="Categorias">
+    <!-- gerado pelo app.js -->
   </nav>
 
   <!-- ================= PRODUTOS ================= -->
   <main id="products"
         class="products-grid"
-        role="main"
         aria-live="polite">
+    <p style="opacity:.6;padding:14px">
+      ⏳ Carregando cardápio…
+    </p>
   </main>
 
   <!-- ================= CARRINHO ================= -->
@@ -65,17 +67,14 @@
     🟢 Ver pedido
   </button>
 
-  <!-- ================= MODAIS ================= -->
-  <!-- app.js cria os modais dinamicamente -->
-  <div id="modal-root" aria-hidden="true"></div>
-
   <!-- ================= APP ================= -->
-  <!-- IMPORTANTE: defer garante que o JS só rode após o HTML -->
+  <!-- defer garante ordem correta -->
   <script src="app.js" defer></script>
 
   <!-- ================= INIT ================= -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
+
       // Inicializa o app público
       if (window.app && typeof window.app.renderPublic === "function") {
         try {

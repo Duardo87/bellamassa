@@ -5,7 +5,7 @@
   <title>Admin • Bella Massa</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- CSS GLOBAL (MESMO DO SITE) -->
+  <!-- CSS GLOBAL -->
   <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -15,22 +15,26 @@
 <section id="login" style="padding:20px;max-width:420px;margin:auto">
   <h2>🔐 Login Admin</h2>
 
-  <input
-    id="loginUser"
-    placeholder="Usuário"
-    autocomplete="username"
-  >
+  <form onsubmit="login();return false">
+    <input
+      id="loginUser"
+      placeholder="Usuário"
+      autocomplete="username"
+      required
+    >
 
-  <input
-    id="loginPass"
-    type="password"
-    placeholder="Senha"
-    autocomplete="current-password"
-  >
+    <input
+      id="loginPass"
+      type="password"
+      placeholder="Senha"
+      autocomplete="current-password"
+      required
+    >
 
-  <button class="btn btn-green" onclick="login()">
-    Entrar
-  </button>
+    <button class="btn btn-green" type="submit">
+      Entrar
+    </button>
+  </form>
 
   <p style="margin-top:10px;font-size:13px;color:#666">
     Use <strong>admin</strong> / <strong>123456</strong> (teste).
@@ -40,103 +44,125 @@
 <!-- ================= ADMIN ================= -->
 <section id="admin" class="hidden" style="padding:20px;max-width:900px;margin:auto">
 
-  <div style="display:flex;justify-content:space-between;align-items:center">
+  <header style="display:flex;justify-content:space-between;align-items:center">
     <h2>⚙️ Painel Admin</h2>
     <button class="btn btn-ghost btn-small" onclick="logout()">Sair</button>
-  </div>
+  </header>
 
   <!-- ================= LOJA ================= -->
-  <h3>🏪 Dados da Loja</h3>
+  <section>
+    <h3>🏪 Dados da Loja</h3>
 
-  <input id="storeName" placeholder="Nome da loja">
-  <input id="storePhone" placeholder="WhatsApp (ex: 5562993343622)">
+    <input id="storeName" placeholder="Nome da loja" required>
+    <input id="storePhone" placeholder="WhatsApp (ex: 5562993343622)" required>
 
-  <button class="btn btn-green" onclick="saveStore()">
-    Salvar Loja
-  </button>
+    <button class="btn btn-green" onclick="saveStore()">
+      Salvar Loja
+    </button>
+  </section>
 
   <hr>
 
   <!-- ================= CATEGORIAS ================= -->
-  <h3>📂 Categorias</h3>
+  <section>
+    <h3>📂 Categorias</h3>
 
-  <input id="catName" placeholder="Nova categoria">
-  <button class="btn btn-green" onclick="addCategory()">Adicionar</button>
+    <input id="catName" placeholder="Nova categoria" required>
+    <button class="btn btn-green" onclick="addCategory()">Adicionar</button>
 
-  <div id="catList" style="margin-top:10px"></div>
+    <div id="catList" style="margin-top:10px"></div>
+  </section>
 
   <hr>
 
   <!-- ================= PRODUTOS ================= -->
-  <h3>🍕 Produtos</h3>
+  <section>
+    <h3>🍕 Produtos</h3>
 
-  <input id="prodName" placeholder="Nome do produto">
-  <input id="prodDesc" placeholder="Descrição">
-  <select id="prodCat"></select>
+    <input id="prodName" placeholder="Nome do produto" required>
+    <input id="prodDesc" placeholder="Descrição">
 
-  <input id="prodFlavors" type="number" placeholder="Máx sabores (ex: 2)">
-  <input id="prodImage" type="file" accept="image/*">
+    <select id="prodCat" required></select>
 
-  <label style="display:block;margin:8px 0">
-    <input type="checkbox" id="prodBest">
-    Mais pedido
-  </label>
+    <input
+      id="prodFlavors"
+      type="number"
+      min="1"
+      placeholder="Máx sabores (ex: 2)"
+    >
 
-  <!-- ⚠️ PREÇO REMOVIDO -->
-  <small style="color:#777">
-    💡 O preço é definido pelo tamanho (P / M / G) no site.
-  </small>
+    <input
+      id="prodImage"
+      type="file"
+      accept="image/*"
+    >
 
-  <button class="btn btn-green" onclick="addProduct()">
-    Adicionar Produto
-  </button>
+    <label style="display:block;margin:8px 0">
+      <input type="checkbox" id="prodBest">
+      Mais pedido
+    </label>
 
-  <div id="productList" style="margin-top:12px"></div>
+    <small style="color:#777">
+      💡 O preço é definido pelo tamanho (P / M / G) no site.
+    </small>
+
+    <button class="btn btn-green" onclick="addProduct()">
+      Adicionar Produto
+    </button>
+
+    <div id="productList" style="margin-top:12px"></div>
+  </section>
 
   <hr>
 
   <!-- ================= ADICIONAIS ================= -->
-  <h3>➕ Adicionais</h3>
+  <section>
+    <h3>➕ Adicionais</h3>
 
-  <input id="extraName" placeholder="Nome do adicional">
-  <input id="extraPrice" type="number" placeholder="Preço">
+    <input id="extraName" placeholder="Nome do adicional" required>
+    <input id="extraPrice" type="number" placeholder="Preço" min="0" step="0.01" required>
 
-  <button class="btn btn-green" onclick="addExtra()">
-    Adicionar
-  </button>
+    <button class="btn btn-green" onclick="addExtra()">
+      Adicionar
+    </button>
 
-  <div id="extraList" style="margin-top:10px"></div>
+    <div id="extraList" style="margin-top:10px"></div>
+  </section>
 
   <hr>
 
   <!-- ================= BORDAS ================= -->
-  <h3>🥖 Bordas</h3>
+  <section>
+    <h3>🥖 Bordas</h3>
 
-  <input id="borderName" placeholder="Nome da borda">
-  <input id="borderPrice" type="number" placeholder="Preço">
+    <input id="borderName" placeholder="Nome da borda" required>
+    <input id="borderPrice" type="number" placeholder="Preço" min="0" step="0.01" required>
 
-  <button class="btn btn-green" onclick="addBorder()">
-    Adicionar
-  </button>
+    <button class="btn btn-green" onclick="addBorder()">
+      Adicionar
+    </button>
 
-  <div id="borderList" style="margin-top:10px"></div>
+    <div id="borderList" style="margin-top:10px"></div>
+  </section>
 
   <hr>
 
   <!-- ================= PROMO ================= -->
-  <h3>🔥 Promoção do Dia</h3>
+  <section>
+    <h3>🔥 Promoção do Dia</h3>
 
-  <input id="promoDesc" placeholder="Descrição da promoção">
-  <input id="promoPrice" type="number" placeholder="Preço">
-  <input id="promoImage" type="file" accept="image/*">
+    <input id="promoDesc" placeholder="Descrição da promoção">
+    <input id="promoPrice" type="number" placeholder="Preço" min="0" step="0.01">
+    <input id="promoImage" type="file" accept="image/*">
 
-  <button class="btn btn-green" onclick="savePromo()">
-    Salvar Promoção
-  </button>
+    <button class="btn btn-green" onclick="savePromo()">
+      Salvar Promoção
+    </button>
+  </section>
 
 </section>
 
-<!-- ================= ADMIN SCRIPT ================= -->
+<!-- ================= SCRIPT ================= -->
 <script src="admin.js" defer></script>
 
 </body>
