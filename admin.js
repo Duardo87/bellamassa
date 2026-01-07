@@ -9,7 +9,7 @@ const ORDERS_KEY = "pizzaria-orders";
 const $ = id => document.getElementById(id);
 
 // ==================================================
-// DEFAULT
+// DEFAULT (NORMALIZADO)
 // ==================================================
 const DEFAULT_DATA = {
   store: { name: "", phone: "" },
@@ -17,7 +17,12 @@ const DEFAULT_DATA = {
   products: [],
   extras: [],
   borders: [],
-  promo: { active: false }
+  promo: {
+    active: false,
+    description: "",
+    price: 0,
+    image: null
+  }
 };
 
 // ==================================================
@@ -37,18 +42,30 @@ function logout() {
 }
 
 // ==================================================
-// STORAGE
+// STORAGE (SEGURO)
 // ==================================================
+function normalizeDB(raw = {}) {
+  return {
+    store: raw.store || { ...DEFAULT_DATA.store },
+    categories: Array.isArray(raw.categories) ? raw.categories : [],
+    products: Array.isArray(raw.products) ? raw.products : [],
+    extras: Array.isArray(raw.extras) ? raw.extras : [],
+    borders: Array.isArray(raw.borders) ? raw.borders : [],
+    promo: { ...DEFAULT_DATA.promo, ...(raw.promo || {}) }
+  };
+}
+
 function loadDB() {
   try {
-    return { ...DEFAULT_DATA, ...JSON.parse(localStorage.getItem(KEY)) };
+    const raw = JSON.parse(localStorage.getItem(KEY)) || {};
+    return normalizeDB(raw);
   } catch {
-    return { ...DEFAULT_DATA };
+    return normalizeDB();
   }
 }
 
 function saveDB(d) {
-  localStorage.setItem(KEY, JSON.stringify(d));
+  localStorage.setItem(KEY, JSON.stringify(normalizeDB(d)));
 }
 
 // ==================================================
@@ -83,7 +100,11 @@ function addCategory() {
   const d = loadDB();
   const name = $("catName").value.trim();
   if (!name) return;
-  d.categories.push(name);
+
+  if (!d.categories.includes(name)) {
+    d.categories.push(name);
+  }
+
   saveDB(d);
   $("catName").value = "";
   renderCategories();
@@ -94,16 +115,17 @@ function renderCategories() {
   $("catList").innerHTML = d.categories.map(c => `<p>${c}</p>`).join("");
   $("prodCat").innerHTML =
     `<option value="">Selecione</option>` +
-    d.categories.map(c => `<option>${c}</option>`).join("");
+    d.categories.map(c => `<option value="${c}">${c}</option>`).join("");
 }
 
 // ==================================================
-// PRODUCTS (INLINE EDIT)
+// PRODUCTS (EDITÁVEL)
 // ==================================================
 function addProduct() {
   const d = loadDB();
   const name = $("prodName").value.trim();
   const cat = $("prodCat").value;
+
   if (!name || !cat) return alert("Preencha nome e categoria");
 
   const save = img => {
@@ -125,7 +147,9 @@ function addProduct() {
     const r = new FileReader();
     r.onload = () => save(r.result);
     r.readAsDataURL(file);
-  } else save(null);
+  } else {
+    save(null);
+  }
 }
 
 function renderProducts() {
@@ -133,18 +157,19 @@ function renderProducts() {
   const list = $("productList");
 
   list.innerHTML = d.products.map((p, i) => `
-    <div style="border-bottom:1px solid #eee;padding:8px 0">
+    <div style="border-bottom:1px solid #eee;padding:10px 0">
       <input value="${p.name}" onchange="editProduct(${p.id},'name',this.value)">
       <input value="${p.desc || ""}" onchange="editProduct(${p.id},'desc',this.value)">
       <input type="number" value="${p.maxFlavors}" onchange="editProduct(${p.id},'maxFlavors',this.value)">
-      
-      <button onclick="toggleProduct(${p.id})">
-        ${p.active ? "⏸ Pausar" : "▶️ Ativar"}
-      </button>
 
-      <button onclick="moveProduct(${i},-1)">⬆️</button>
-      <button onclick="moveProduct(${i},1)">⬇️</button>
-      <button onclick="deleteProduct(${p.id})">🗑</button>
+      <div style="margin-top:6px">
+        <button onclick="toggleProduct(${p.id})">
+          ${p.active ? "⏸ Pausar" : "▶️ Ativar"}
+        </button>
+        <button onclick="moveProduct(${i},-1)">⬆️</button>
+        <button onclick="moveProduct(${i},1)">⬇️</button>
+        <button onclick="deleteProduct(${p.id})">🗑</button>
+      </div>
     </div>
   `).join("");
 }
@@ -153,6 +178,7 @@ function editProduct(id, field, value) {
   const d = loadDB();
   const p = d.products.find(p => p.id === id);
   if (!p) return;
+
   p[field] = field === "maxFlavors" ? Number(value) : value;
   saveDB(d);
 }
@@ -160,6 +186,8 @@ function editProduct(id, field, value) {
 function toggleProduct(id) {
   const d = loadDB();
   const p = d.products.find(p => p.id === id);
+  if (!p) return;
+
   p.active = !p.active;
   saveDB(d);
   renderProducts();
@@ -178,23 +206,47 @@ function moveProduct(index, dir) {
   const arr = d.products;
   const newIndex = index + dir;
   if (newIndex < 0 || newIndex >= arr.length) return;
+
   [arr[index], arr[newIndex]] = [arr[newIndex], arr[index]];
   saveDB(d);
   renderProducts();
 }
 
 // ==================================================
-// PROMOÇÃO
+// PROMOÇÃO DO DIA (COM FOTO)
 // ==================================================
 function savePromo() {
   const d = loadDB();
-  d.promo = {
-    active: true,
-    description: $("promoDesc").value.trim(),
-    price: Number($("promoPrice").value)
+
+  const desc = $("promoDesc").value.trim();
+  const price = Number($("promoPrice").value);
+  const imgEl = $("promoImage");
+
+  if (!desc || !price) {
+    alert("Preencha descrição e preço");
+    return;
+  }
+
+  const save = img => {
+    d.promo = {
+      active: d.promo.active ?? false,
+      description: desc,
+      price,
+      image: img
+    };
+    saveDB(d);
+    renderPromo();
+    alert("Promoção salva");
   };
-  saveDB(d);
-  alert("Promoção salva");
+
+  const file = imgEl && imgEl.files && imgEl.files[0];
+  if (file) {
+    const r = new FileReader();
+    r.onload = () => save(r.result);
+    r.readAsDataURL(file);
+  } else {
+    save(d.promo.image || null);
+  }
 }
 
 function togglePromo() {
@@ -206,8 +258,12 @@ function togglePromo() {
 
 function renderPromo() {
   const d = loadDB();
-  if (!$("promoStatus")) return;
-  $("promoStatus").innerHTML = d.promo?.active ? "🔥 ATIVA" : "⏸ PAUSADA";
+  const el = $("promoStatus");
+  if (!el) return;
+
+  el.textContent = d.promo.active ? "ATIVA" : "PAUSADA";
+  el.className =
+    "status-badge " + (d.promo.active ? "status-on" : "status-off");
 }
 
 // ==================================================
