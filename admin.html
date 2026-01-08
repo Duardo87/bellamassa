@@ -5,10 +5,8 @@
   <title>Admin • Cardápio</title>
   <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
 
-<!-- LOGIN -->
 <div id="login">
   <h2>Login Admin</h2>
   <input id="loginUser" placeholder="Usuário">
@@ -16,7 +14,6 @@
   <button onclick="login()">Entrar</button>
 </div>
 
-<!-- ADMIN -->
 <div id="admin" class="hidden">
 
   <h2>🏪 Dados da Loja</h2>
@@ -39,10 +36,14 @@
   <input id="prodName" placeholder="Nome do produto">
   <input id="prodDesc" placeholder="Descrição">
   <select id="prodCat"></select>
+
   <input id="priceP" placeholder="Preço P">
   <input id="priceM" placeholder="Preço M">
   <input id="priceG" placeholder="Preço G">
+
   <input id="prodFlavors" placeholder="Máx sabores">
+  <input id="prodImage" type="file" accept="image/*">
+
   <button onclick="addProduct()">Adicionar produto</button>
   <div id="productList"></div>
 
@@ -51,7 +52,7 @@
   <h2>➕ Adicionais</h2>
   <input id="extraName" placeholder="Nome">
   <input id="extraPrice" placeholder="Preço">
-  <button onclick="addExtra()">Adicionar adicional</button>
+  <button onclick="addExtra()">Adicionar</button>
   <div id="extraList"></div>
 
   <hr>
@@ -59,7 +60,7 @@
   <h2>🥖 Bordas</h2>
   <input id="borderName" placeholder="Nome">
   <input id="borderPrice" placeholder="Preço">
-  <button onclick="addBorder()">Adicionar borda</button>
+  <button onclick="addBorder()">Adicionar</button>
   <div id="borderList"></div>
 
   <hr>

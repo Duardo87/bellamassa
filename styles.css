@@ -237,4 +237,6 @@ textarea {
 }
 .row button{
   padding:6px 8px;
-}
+}.row{display:flex;gap:6px;margin-bottom:6px}
+input,select,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #ddd}
+button{padding:10px;border-radius:8px}
