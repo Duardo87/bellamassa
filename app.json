@@ -1,0 +1,38 @@
+{
+  "store": {
+    "name": "Bella Massa",
+    "phone": "556299999999",
+    "open": "18:00",
+    "close": "23:30"
+  },
+  "categories": [
+    { "id": 1, "name": "Pizzas", "order": 1, "active": true }
+  ],
+  "products": [
+    {
+      "id": 101,
+      "categoryId": 1,
+      "name": "Calabresa",
+      "desc": "Calabresa com cebola",
+      "prices": { "P": 30, "M": 40, "G": 50 },
+      "maxFlavors": 2,
+      "image": "base64...",
+      "order": 1,
+      "active": true
+    }
+  ],
+  "extras": [
+    { "id": 1, "name": "Bacon", "price": 5, "order": 1, "active": true }
+  ],
+  "borders": [
+    { "id": 1, "name": "Catupiry", "price": 8, "order": 1, "active": true }
+  ],
+  "promoWeek": {
+    "5": {
+      "active": true,
+      "title": "Sexta da Pizza",
+      "price": 49.90,
+      "image": "base64..."
+    }
+  }
+}
