@@ -29,7 +29,6 @@ function renderHeader() {
   document.getElementById("store-phone").href =
     `https://wa.me/${data.store.phone}`;
 }
-
 // ================= PROMOÇÃO =================
 function showPromoOfDay() {
   if (!data.promoWeek) return;

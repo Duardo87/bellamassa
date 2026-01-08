@@ -140,8 +140,6 @@ function renderBorders(){const d=loadDB();borderList.innerHTML=d.borders.map(b=>
 function deleteBorder(id){const d=loadDB();d.borders=d.borders.filter(b=>b.id!==id);saveDB(d);renderBorders();}
 
 /* PROMO */
-
-}
 function renderPromoWeek() {
   const d = loadDB();
   const days = ["Dom","Seg","Ter","Qua","Qui","Sex","Sab"];
