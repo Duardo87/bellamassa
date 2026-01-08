@@ -9,43 +9,57 @@
   <link rel="stylesheet" href="styles.css">
 
   <style>
-    body { background: #f4f4f4; }
+   <body>
+  <div id="login">
+    <input id="loginUser" placeholder="Usuário">
+    <input id="loginPass" type="password" placeholder="Senha">
+    <button onclick="login()">Entrar</button>
+  </div>
 
-    .admin-card {
-      background: #fff;
-      border-radius: 16px;
-      padding: 16px;
-      margin-bottom: 18px;
-      box-shadow: 0 6px 16px rgba(0,0,0,.08);
-    }
+  <div id="admin" class="hidden">
+    <h2>🏪 Loja</h2>
+    <input id="storeName" placeholder="Nome da loja">
+    <input id="storePhone" placeholder="WhatsApp">
+    <input id="openTime" type="time">
+    <input id="closeTime" type="time">
+    <button onclick="saveStore()">Salvar loja</button>
 
-    .admin-card h3 {
-      margin-top: 0;
-      margin-bottom: 12px;
-    }
+    <h2>📂 Categorias</h2>
+    <input id="catName" placeholder="Nova categoria">
+    <button onclick="addCategory()">Adicionar</button>
+    <div id="catList"></div>
 
-    input, select, textarea {
-      width: 100%;
-      margin-bottom: 10px;
-      padding: 10px;
-    }
+    <h2>🍕 Produtos</h2>
+    <input id="prodName" placeholder="Nome">
+    <input id="prodDesc" placeholder="Descrição">
+    <select id="prodCat"></select>
+    <input id="priceP" placeholder="Preço P">
+    <input id="priceM" placeholder="Preço M">
+    <input id="priceG" placeholder="Preço G">
+    <input id="prodFlavors" placeholder="Máx sabores">
+    <button onclick="addProduct()">Adicionar produto</button>
+    <div id="productList"></div>
 
-    hr {
-      border: none;
-      border-top: 1px solid #eee;
-      margin: 16px 0;
-    }
+    <h2>➕ Adicionais</h2>
+    <input id="extraName" placeholder="Nome">
+    <input id="extraPrice" placeholder="Preço">
+    <button onclick="simpleList('extras',extraName.value,extraPrice.value)">Adicionar</button>
+    <div id="extraList"></div>
 
-    .admin-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-  </style>
-</head>
+    <h2>🥖 Bordas</h2>
+    <input id="borderName" placeholder="Nome">
+    <input id="borderPrice" placeholder="Preço">
+    <button onclick="simpleList('borders',borderName.value,borderPrice.value)">Adicionar</button>
+    <div id="borderList"></div>
 
-<body>
+    <h2>🔥 Promoções</h2>
+    <div id="promoWeek"></div>
 
+    <button onclick="exportAppJSON()">⬇ Exportar app.json</button>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
 <!-- ================= LOGIN ================= -->
 <section id="login" style="padding:20px;max-width:420px;margin:auto">
   <h2>🔐 Login Admin</h2>
