@@ -9,56 +9,63 @@
   <link rel="stylesheet" href="styles.css">
 
   <style>
-    body { background:#f4f4f4 }
-
-    .admin-card {
-      background:#fff;
-      border-radius:16px;
-      padding:16px;
-      margin-bottom:18px;
-      box-shadow:0 6px 16px rgba(0,0,0,.08);
+    body {
+      background: #f4f4f4;
     }
 
-    .admin-card h3 { margin:0 0 12px }
+    .admin-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 18px;
+      box-shadow: 0 6px 16px rgba(0,0,0,.08);
+    }
+
+    .admin-card h3 {
+      margin-top: 0;
+      margin-bottom: 12px;
+    }
 
     input, select {
-      width:100%;
-      margin-bottom:10px;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+
+    .admin-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
     }
 
     .btn-small {
-      padding:8px 12px;
-      font-size:14px;
-      border-radius:10px;
+      padding: 8px 12px;
+      font-size: 14px;
+      border-radius: 10px;
     }
 
     .status-badge {
-      padding:6px 12px;
-      border-radius:999px;
-      font-weight:700;
-      font-size:13px;
-      display:inline-block;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 13px;
+      display: inline-block;
     }
 
-    .status-on { background:#2ecc71;color:#fff }
-    .status-off { background:#f1c40f;color:#000 }
-
-    .logo-preview {
-      display:flex;
-      align-items:center;
-      gap:12px;
-      margin-bottom:12px;
+    .status-on {
+      background: #2ecc71;
+      color: #fff;
     }
 
-    .logo-preview img {
-      max-height:50px;
-      background:transparent;
+    .status-off {
+      background: #f1c40f;
+      color: #000;
     }
 
     hr {
-      border:none;
-      border-top:1px solid #eee;
-      margin:16px 0;
+      border: none;
+      border-top: 1px solid #eee;
+      margin: 16px 0;
     }
   </style>
 </head>
@@ -83,25 +90,15 @@
     <button class="btn btn-ghost btn-small" onclick="logout()">Sair</button>
   </div>
 
-  <!-- ================= LOJA ================= -->
+  <!-- LOJA -->
   <div class="admin-card">
     <h3>🏪 Dados da Loja</h3>
-
     <input id="storeName" placeholder="Nome da loja">
     <input id="storePhone" placeholder="WhatsApp (DDD + número)">
-
-    <label><strong>Logo da loja (PNG transparente)</strong></label>
-    <input id="storeLogo" type="file" accept="image/png,image/webp">
-
-    <div class="logo-preview" id="logoPreview" style="display:none">
-      <img id="logoImg">
-      <small>Pré-visualização</small>
-    </div>
-
     <button class="btn btn-green" onclick="saveStore()">Salvar Loja</button>
   </div>
 
-  <!-- ================= CATEGORIAS ================= -->
+  <!-- CATEGORIAS -->
   <div class="admin-card">
     <h3>📂 Categorias</h3>
     <input id="catName" placeholder="Nova categoria">
@@ -110,7 +107,7 @@
     <div id="catList"></div>
   </div>
 
-  <!-- ================= PRODUTOS ================= -->
+  <!-- PRODUTOS -->
   <div class="admin-card">
     <h3>🍕 Produtos</h3>
 
@@ -118,7 +115,7 @@
     <input id="prodDesc" placeholder="Descrição">
     <select id="prodCat"></select>
     <input id="prodFlavors" type="number" placeholder="Máx sabores">
-    <input id="prodImage" type="file" accept="image/*">
+    <input id="prodImage" type="file">
 
     <button class="btn btn-green" onclick="addProduct()">Adicionar Produto</button>
 
@@ -126,24 +123,28 @@
     <div id="productList"></div>
   </div>
 
-  <!-- ================= PROMOÇÃO ================= -->
+  <!-- PROMOÇÃO -->
   <div class="admin-card">
     <h3>🔥 Promoção do Dia</h3>
 
     <p>
       <strong>Status:</strong>
-      <span id="promoStatus" class="status-badge status-off">PAUSADA</span>
+      <span id="promoStatus" class="status-badge status-off">
+        PAUSADA
+      </span>
     </p>
 
     <input id="promoDesc" placeholder="Descrição da promoção">
     <input id="promoPrice" type="number" placeholder="Preço">
     <input id="promoImage" type="file" accept="image/*">
 
-    <button class="btn btn-green" onclick="savePromo()">💾 Salvar</button>
-    <button class="btn btn-ghost" onclick="togglePromo()">▶️ Ativar / ⏸ Pausar</button>
+    <div class="admin-actions">
+      <button class="btn btn-green" onclick="savePromo()">💾 Salvar</button>
+      <button class="btn btn-ghost" onclick="togglePromo()">▶️ Ativar / ⏸ Pausar</button>
+    </div>
   </div>
 
-  <!-- ================= PEDIDOS ================= -->
+  <!-- PEDIDOS -->
   <div class="admin-card">
     <h3>📊 Resumo de Pedidos</h3>
     <div id="ordersSummary"></div>
@@ -152,21 +153,5 @@
 </section>
 
 <script src="admin.js" defer></script>
-
-<script>
-/* Preview da logo */
-document.getElementById("storeLogo")?.addEventListener("change", e => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const r = new FileReader();
-  r.onload = () => {
-    document.getElementById("logoImg").src = r.result;
-    document.getElementById("logoPreview").style.display = "flex";
-  };
-  r.readAsDataURL(file);
-});
-</script>
-
 </body>
 </html>
