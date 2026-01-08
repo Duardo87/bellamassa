@@ -224,7 +224,8 @@ function finishOrder() {
 
 // ================= CARRINHO =================
 function renderCart() {
-  const c = document.getElementById("cart");
+const c = document.getElementById("cart");
+c.classList.remove("hidden");
   let total = 0;
   c.innerHTML = "<h3>Pedido</h3>";
 

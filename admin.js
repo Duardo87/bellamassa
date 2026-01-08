@@ -140,20 +140,65 @@ function renderBorders(){const d=loadDB();borderList.innerHTML=d.borders.map(b=>
 function deleteBorder(id){const d=loadDB();d.borders=d.borders.filter(b=>b.id!==id);saveDB(d);renderBorders();}
 
 /* PROMO */
-function renderPromoWeek(){
-  const d=loadDB();
-  const days=["Dom","Seg","Ter","Qua","Qui","Sex","Sab"];
-  promoWeek.innerHTML=days.map((day,i)=>`
+
+}
+function renderPromoWeek() {
+  const d = loadDB();
+  const days = ["Dom","Seg","Ter","Qua","Qui","Sex","Sab"];
+
+  promoWeek.innerHTML = days.map((day, i) => `
     <div class="row">
-      ${day}
-      <input placeholder="Título" value="${d.promoWeek[i]?.title||""}" onchange="setPromo(${i},'title',this.value)">
-      <input type="number" placeholder="Preço" value="${d.promoWeek[i]?.price||""}" onchange="setPromo(${i},'price',this.value)">
-      <input type="checkbox" ${d.promoWeek[i]?.active?"checked":""} onchange="setPromo(${i},'active',this.checked)">
+      <strong>${day}</strong>
+
+      <input
+        placeholder="Título"
+        value="${d.promoWeek[i]?.title || ""}"
+        onchange="setPromo(${i},'title',this.value)"
+      >
+
+      <input
+        type="number"
+        placeholder="Preço"
+        value="${d.promoWeek[i]?.price || ""}"
+        onchange="setPromo(${i},'price',this.value)"
+      >
+
+      <input
+        type="file"
+        accept="image/*"
+        onchange="setPromo(${i},'image',this)"
+      >
+
+      <input
+        type="checkbox"
+        ${d.promoWeek[i]?.active ? "checked" : ""}
+        onchange="setPromo(${i},'active',this.checked)"
+      >
+      Ativa
     </div>
   `).join("");
 }
-function setPromo(i,f,v){const d=loadDB();d.promoWeek[i]=d.promoWeek[i]||{};d.promoWeek[i][f]=f==="price"?+v:v;saveDB(d);}
+function setPromo(day, field, value) {
+  const d = loadDB();
+  d.promoWeek[day] = d.promoWeek[day] || {};
 
+  if (field === "image") {
+    const file = value.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      d.promoWeek[day].image = reader.result;
+      saveDB(d);
+      alert("Imagem da promoção salva");
+    };
+    reader.readAsDataURL(file);
+    return;
+  }
+
+  d.promoWeek[day][field] = field === "price" ? Number(value) : value;
+  saveDB(d);
+}
 /* EXPORT */
 function exportAppJSON(){
   const d=loadDB();
