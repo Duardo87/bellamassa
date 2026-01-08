@@ -61,10 +61,7 @@
     <h2>⚙️ Painel Administrativo</h2>
     <button class="btn btn-ghost" onclick="logout()">Sair</button>
   </div>
-<div class="admin-card">
-  <h2>🔥 Promoção por Dia da Semana</h2>
-  <div id="promoWeek"></div>
-</div>
+
   <!-- ================= LOJA ================= -->
   <div class="admin-card">
     <h3>🏪 Dados da Loja</h3>
@@ -151,7 +148,9 @@
       <button class="btn btn-ghost" onclick="togglePromo()">Ativar / Pausar</button>
     </div>
   </div>
-
+<button class="btn btn-green" onclick="exportAppJSON()">
+  ⬇️ Gerar app.json
+</button>
   <!-- ================= PEDIDOS ================= -->
   <div class="admin-card">
     <h3>📊 Resumo de Pedidos</h3>
