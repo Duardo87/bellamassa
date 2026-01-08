@@ -4,32 +4,18 @@
 const STORAGE_KEY = "pizzaria-data";
 const ORDERS_KEY = "pizzaria-orders";
 const WHATS_PHONE = "5562993343622";
-const PUBLIC_DATA_URL = "/data.json";
 
 // ==================================================
-// LOAD DATA (LOCAL + PUBLIC)
+// LOAD DATA
 // ==================================================
-async function loadData() {
-  let raw = null;
-
-  // 1️⃣ tenta localStorage
+function loadData() {
+  let raw = {};
   try {
-    raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    raw = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
   } catch {}
 
-  // 2️⃣ se não existir ou estiver vazio → carrega público
-  if (!raw || !raw.categories || !raw.categories.length) {
-    try {
-      const res = await fetch(PUBLIC_DATA_URL, { cache: "no-store" });
-      raw = await res.json();
-    } catch (e) {
-      console.error("Erro ao carregar data.json", e);
-      raw = {};
-    }
-  }
-
   return {
-    store: raw.store || { name: "Bella Massa", phone: WHATS_PHONE },
+    store: raw.store || { name: "Bella Massa", phone: WHATS_PHONE, logo: null },
     categories: Array.isArray(raw.categories) ? raw.categories : [],
     products: Array.isArray(raw.products) ? raw.products : [],
     extras: Array.isArray(raw.extras) ? raw.extras : [],
@@ -59,8 +45,8 @@ let selectedExtras = [];
 // ==================================================
 // INIT
 // ==================================================
-async function renderPublic() {
-  data = await loadData();
+function renderPublic() {
+  data = loadData();
   renderHeader();
   renderCategories();
   renderPromo();
@@ -68,14 +54,29 @@ async function renderPublic() {
 window.app = { renderPublic };
 
 // ==================================================
-// HEADER
+// HEADER (LOGO AUTOMÁTICA)
 // ==================================================
 function renderHeader() {
   const nameEl = document.getElementById("store-name");
   const phoneEl = document.getElementById("store-phone");
+  const logoEl = document.getElementById("store-logo");
 
-  if (nameEl) nameEl.textContent = data.store.name;
-  if (phoneEl) phoneEl.href = `https://wa.me/${data.store.phone || WHATS_PHONE}`;
+  if (phoneEl) {
+    phoneEl.href = `https://wa.me/${data.store.phone || WHATS_PHONE}`;
+  }
+
+  if (data.store.logo && logoEl) {
+    logoEl.src = data.store.logo;
+    logoEl.alt = data.store.name || "Logo da loja";
+    logoEl.style.display = "block";
+    if (nameEl) nameEl.style.display = "none";
+  } else {
+    if (logoEl) logoEl.style.display = "none";
+    if (nameEl) {
+      nameEl.textContent = data.store.name;
+      nameEl.style.display = "inline";
+    }
+  }
 }
 
 // ==================================================
@@ -144,19 +145,9 @@ function startPromoTimer() {
 // ==================================================
 function renderCategories() {
   const nav = document.getElementById("categories");
-  const grid = document.getElementById("products");
-  if (!nav || !grid) return;
+  if (!nav) return;
 
   nav.innerHTML = "";
-
-  if (!data.categories.length) {
-    grid.innerHTML = `
-      <div style="padding:20px;text-align:center;opacity:.7">
-        ❌ Cardápio indisponível no momento
-      </div>
-    `;
-    return;
-  }
 
   data.categories.forEach((cat, i) => {
     nav.innerHTML += `
@@ -168,7 +159,7 @@ function renderCategories() {
     `;
   });
 
-  renderProducts(data.categories[0]);
+  if (data.categories[0]) renderProducts(data.categories[0]);
 }
 
 // ==================================================
