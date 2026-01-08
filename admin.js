@@ -4,33 +4,28 @@
 const ADMIN_USER = "admin";
 const ADMIN_PASS = "123456";
 const KEY = "pizzaria-data";
-const ORDERS_KEY = "pizzaria-orders";
 
 const $ = id => document.getElementById(id);
 
 // ==================================================
-// DEFAULT (NORMALIZADO)
+// DEFAULT DATA
 // ==================================================
 const DEFAULT_DATA = {
-  store: { name: "", phone: "" },
+  store: { name: "", phone: "", open: "", close: "" },
   categories: [],
   products: [],
   extras: [],
-  borders: [],
-  promo: {
-    active: false,
-    description: "",
-    price: 0,
-    image: null
-  }
+  borders: []
 };
 
 // ==================================================
 // AUTH
 // ==================================================
 function login() {
-  if ($("loginUser").value !== ADMIN_USER || $("loginPass").value !== ADMIN_PASS) {
-    return alert("Login inválido");
+  if ($("loginUser").value !== ADMIN_USER ||
+      $("loginPass").value !== ADMIN_PASS) {
+    alert("Login inválido");
+    return;
   }
   $("login").classList.add("hidden");
   $("admin").classList.remove("hidden");
@@ -42,29 +37,18 @@ function logout() {
 }
 
 // ==================================================
-// STORAGE (SEGURO)
+// STORAGE
 // ==================================================
-function normalizeDB(raw = {}) {
-  return {
-    store: raw.store || { ...DEFAULT_DATA.store },
-    categories: Array.isArray(raw.categories) ? raw.categories : [],
-    products: Array.isArray(raw.products) ? raw.products : [],
-    extras: Array.isArray(raw.extras) ? raw.extras : [],
-    borders: Array.isArray(raw.borders) ? raw.borders : [],
-    promo: { ...DEFAULT_DATA.promo, ...(raw.promo || {}) }
-  };
-}
-
 function loadDB() {
   try {
-    return normalizeDB(JSON.parse(localStorage.getItem(KEY)) || {});
+    return JSON.parse(localStorage.getItem(KEY)) || structuredClone(DEFAULT_DATA);
   } catch {
-    return normalizeDB();
+    return structuredClone(DEFAULT_DATA);
   }
 }
 
 function saveDB(d) {
-  localStorage.setItem(KEY, JSON.stringify(normalizeDB(d)));
+  localStorage.setItem(KEY, JSON.stringify(d));
 }
 
 // ==================================================
@@ -72,14 +56,17 @@ function saveDB(d) {
 // ==================================================
 function loadAdmin() {
   const d = loadDB();
-  $("storeName").value = d.store.name || "";
-  $("storePhone").value = d.store.phone || "";
+
+  $("storeName").value = d.store.name;
+  $("storePhone").value = d.store.phone;
+  $("openTime").value = d.store.open;
+  $("closeTime").value = d.store.close;
+
   renderCategories();
   renderProducts();
-  renderPromo();
-  renderOrders();
+  renderExtras();
+  renderBorders();
 }
-window.loadAdmin = loadAdmin;
 
 // ==================================================
 // STORE
@@ -89,23 +76,28 @@ function saveStore() {
   d.store.name = $("storeName").value.trim();
   d.store.phone = $("storePhone").value.replace(/\D/g, "");
   saveDB(d);
-  alert("Loja salva");
+  alert("Dados salvos");
+}
+
+function saveHours() {
+  const d = loadDB();
+  d.store.open = $("openTime").value;
+  d.store.close = $("closeTime").value;
+  saveDB(d);
+  alert("Horário salvo");
 }
 
 // ==================================================
-// CATEGORIES (EDITAR / APAGAR)
+// CATEGORIES
 // ==================================================
 function addCategory() {
   const d = loadDB();
   const name = $("catName").value.trim();
   if (!name) return;
 
-  if (!d.categories.includes(name)) {
-    d.categories.push(name);
-  }
-
-  saveDB(d);
+  d.categories.push(name);
   $("catName").value = "";
+  saveDB(d);
   renderCategories();
 }
 
@@ -113,201 +105,193 @@ function renderCategories() {
   const d = loadDB();
 
   $("catList").innerHTML = d.categories.map((c, i) => `
-    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
-      <input
-        value="${c}"
-        style="flex:1"
-        onchange="editCategory(${i}, this.value)"
-      >
-      <button class="btn-del" onclick="deleteCategory(${i})">🗑</button>
+    <div>
+      <input value="${c}" onchange="editCategory(${i},this.value)">
+      <button onclick="deleteCategory(${i})">🗑</button>
     </div>
   `).join("");
 
   $("prodCat").innerHTML =
     `<option value="">Selecione</option>` +
-    d.categories.map(c => `<option value="${c}">${c}</option>`).join("");
+    d.categories.map(c => `<option>${c}</option>`).join("");
 }
 
-function editCategory(index, newName) {
+function editCategory(i, val) {
   const d = loadDB();
-  newName = newName.trim();
-  if (!newName) return;
-
-  const oldName = d.categories[index];
-  d.categories[index] = newName;
-
-  // atualiza produtos ligados à categoria
+  const old = d.categories[i];
+  d.categories[i] = val.trim();
   d.products.forEach(p => {
-    if (p.category === oldName) {
-      p.category = newName;
-    }
+    if (p.category === old) p.category = val.trim();
   });
-
   saveDB(d);
   renderCategories();
 }
 
-function deleteCategory(index) {
-  if (!confirm("Excluir esta categoria?")) return;
-
+function deleteCategory(i) {
   const d = loadDB();
-  const removed = d.categories[index];
-  d.categories.splice(index, 1);
-
-  // remove categoria dos produtos
-  d.products.forEach(p => {
-    if (p.category === removed) {
-      p.category = "";
-    }
-  });
-
+  d.categories.splice(i, 1);
   saveDB(d);
   renderCategories();
   renderProducts();
 }
 
 // ==================================================
-// PRODUCTS (EDITÁVEL)
+// PRODUCTS
 // ==================================================
 function addProduct() {
   const d = loadDB();
-  const name = $("prodName").value.trim();
-  const cat = $("prodCat").value;
 
-  if (!name || !cat) return alert("Preencha nome e categoria");
+  const prices = {
+    P: Number($("priceP").value) || null,
+    M: Number($("priceM").value) || null,
+    G: Number($("priceG").value) || null
+  };
 
-  const save = img => {
-    d.products.push({
-      id: Date.now(),
-      name,
-      desc: $("prodDesc").value.trim(),
-      category: cat,
-      maxFlavors: Number($("prodFlavors").value) || 2,
-      image: img,
-      active: true
-    });
-    saveDB(d);
-    renderProducts();
+  if (!prices.P && !prices.M && !prices.G) {
+    alert("Informe ao menos um preço");
+    return;
+  }
+
+  const p = {
+    id: Date.now(),
+    name: $("prodName").value,
+    desc: $("prodDesc").value,
+    category: $("prodCat").value,
+    maxFlavors: Number($("prodFlavors").value) || 2,
+    prices,
+    image: null,
+    active: true
   };
 
   const file = $("prodImage").files[0];
   if (file) {
     const r = new FileReader();
-    r.onload = () => save(r.result);
+    r.onload = () => {
+      p.image = r.result;
+      d.products.push(p);
+      saveDB(d);
+      renderProducts();
+    };
     r.readAsDataURL(file);
   } else {
-    save(null);
+    d.products.push(p);
+    saveDB(d);
+    renderProducts();
   }
+
+  $("prodName").value = "";
+  $("prodDesc").value = "";
+  $("prodFlavors").value = "";
+  $("priceP").value = "";
+  $("priceM").value = "";
+  $("priceG").value = "";
+  $("prodImage").value = "";
 }
 
 function renderProducts() {
   const d = loadDB();
-  $("productList").innerHTML = d.products.map((p, i) => `
-    <div style="border-bottom:1px solid #eee;padding:10px 0">
-      <input value="${p.name}" onchange="editProduct(${p.id},'name',this.value)">
-      <input value="${p.desc || ""}" onchange="editProduct(${p.id},'desc',this.value)">
-      <input type="number" value="${p.maxFlavors}" onchange="editProduct(${p.id},'maxFlavors',this.value)">
-      <div style="margin-top:6px">
-        <button onclick="toggleProduct(${p.id})">${p.active ? "⏸ Pausar" : "▶️ Ativar"}</button>
-        <button onclick="moveProduct(${i},-1)">⬆️</button>
-        <button onclick="moveProduct(${i},1)">⬇️</button>
-        <button onclick="deleteProduct(${p.id})">🗑</button>
-      </div>
+  $("productList").innerHTML = d.products.map(p => `
+    <div>
+      ${p.name}
+      <button onclick="toggleProduct(${p.id})">${p.active ? "⏸" : "▶️"}</button>
+      <button onclick="deleteProduct(${p.id})">🗑</button>
     </div>
   `).join("");
 }
 
-function editProduct(id, field, value) {
-  const d = loadDB();
-  const p = d.products.find(p => p.id === id);
-  if (!p) return;
-  p[field] = field === "maxFlavors" ? Number(value) : value;
-  saveDB(d);
-}
-
 function toggleProduct(id) {
   const d = loadDB();
-  const p = d.products.find(p => p.id === id);
+  const p = d.products.find(x => x.id === id);
   p.active = !p.active;
   saveDB(d);
   renderProducts();
 }
 
 function deleteProduct(id) {
-  if (!confirm("Excluir produto?")) return;
   const d = loadDB();
   d.products = d.products.filter(p => p.id !== id);
   saveDB(d);
   renderProducts();
 }
 
-function moveProduct(index, dir) {
+// ==================================================
+// EXTRAS
+// ==================================================
+function addExtra() {
   const d = loadDB();
-  const arr = d.products;
-  const newIndex = index + dir;
-  if (newIndex < 0 || newIndex >= arr.length) return;
-  [arr[index], arr[newIndex]] = [arr[newIndex], arr[index]];
+  d.extras.push({
+    id: Date.now(),
+    name: $("extraName").value,
+    price: Number($("extraPrice").value),
+    active: true
+  });
   saveDB(d);
-  renderProducts();
+  renderExtras();
 }
 
-// ==================================================
-// PROMOÇÃO DO DIA (COM FOTO)
-// ==================================================
-function savePromo() {
+function renderExtras() {
   const d = loadDB();
-  const desc = $("promoDesc").value.trim();
-  const price = Number($("promoPrice").value);
-  const imgEl = $("promoImage");
-
-  if (!desc || !price) return alert("Preencha descrição e preço");
-
-  const save = img => {
-    d.promo = {
-      ...d.promo,
-      description: desc,
-      price,
-      image: img
-    };
-    saveDB(d);
-    renderPromo();
-    alert("Promoção salva");
-  };
-
-  const file = imgEl?.files?.[0];
-  if (file) {
-    const r = new FileReader();
-    r.onload = () => save(r.result);
-    r.readAsDataURL(file);
-  } else {
-    save(d.promo.image || null);
-  }
+  $("extraList").innerHTML = d.extras.map(e => `
+    <div>
+      ${e.name} • R$ ${e.price}
+      <button onclick="toggleExtra(${e.id})">${e.active ? "⏸" : "▶️"}</button>
+      <button onclick="deleteExtra(${e.id})">🗑</button>
+    </div>
+  `).join("");
 }
 
-function togglePromo() {
+function toggleExtra(id) {
   const d = loadDB();
-  d.promo.active = !d.promo.active;
+  const e = d.extras.find(x => x.id === id);
+  e.active = !e.active;
   saveDB(d);
-  renderPromo();
+  renderExtras();
 }
 
-function renderPromo() {
+function deleteExtra(id) {
   const d = loadDB();
-  const el = $("promoStatus");
-  if (!el) return;
-  el.textContent = d.promo.active ? "ATIVA" : "PAUSADA";
+  d.extras = d.extras.filter(x => x.id !== id);
+  saveDB(d);
+  renderExtras();
 }
 
 // ==================================================
-// PEDIDOS
+// BORDERS
 // ==================================================
-function renderOrders() {
-  const orders = JSON.parse(localStorage.getItem(ORDERS_KEY) || "[]");
-  let total = 0;
-  orders.forEach(o => total += o.total || 0);
+function addBorder() {
+  const d = loadDB();
+  d.borders.push({
+    id: Date.now(),
+    name: $("borderName").value,
+    price: Number($("borderPrice").value),
+    active: true
+  });
+  saveDB(d);
+  renderBorders();
+}
 
-  $("ordersSummary").innerHTML = `
-    <p>📦 Pedidos: ${orders.length}</p>
-    <p>💰 Faturamento: R$ ${total.toFixed(2)}</p>
-  `;
+function renderBorders() {
+  const d = loadDB();
+  $("borderList").innerHTML = d.borders.map(b => `
+    <div>
+      ${b.name} • R$ ${b.price}
+      <button onclick="toggleBorder(${b.id})">${b.active ? "⏸" : "▶️"}</button>
+      <button onclick="deleteBorder(${b.id})">🗑</button>
+    </div>
+  `).join("");
+}
+
+function toggleBorder(id) {
+  const d = loadDB();
+  const b = d.borders.find(x => x.id === id);
+  b.active = !b.active;
+  saveDB(d);
+  renderBorders();
+}
+
+function deleteBorder(id) {
+  const d = loadDB();
+  d.borders = d.borders.filter(x => x.id !== id);
+  saveDB(d);
+  renderBorders();
 }

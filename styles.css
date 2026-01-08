@@ -16,11 +16,9 @@
   --card: #ffffff;
   --text: #222;
   --muted: #777;
-  --radius: 18px;
+  --radius: 16px;
   --shadow-soft: 0 6px 18px rgba(0,0,0,.12);
   --shadow-strong: 0 10px 30px rgba(0,0,0,.25);
-  --max-content-width: 1100px;
-  --focus-ring: 3px rgba(37,211,102,0.25);
 }
 
 /* =====================================================
@@ -37,11 +35,10 @@ body {
   background: var(--bg);
   color: var(--text);
   padding-bottom: env(safe-area-inset-bottom);
-  -webkit-font-smoothing: antialiased;
 }
 
 /* =====================================================
-   HEADER (COM LOGO TRANSPARENTE)
+   HEADER
 ===================================================== */
 .site-header {
   background: linear-gradient(135deg, var(--primary), var(--primary-dark));
@@ -49,52 +46,7 @@ body {
   padding: calc(12px + env(safe-area-inset-top)) 16px 16px;
   position: sticky;
   top: 0;
-  z-index: 1200;
-}
-
-.site-header .container {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-/* LOGO */
-.site-logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* imagem da logo */
-.site-logo img {
-  max-height: 44px;
-  width: auto;
-  object-fit: contain;
-  background: transparent;
-  display: block;
-}
-
-/* fallback texto */
-.site-logo .logo-text {
-  font-size: 20px;
-  font-weight: 800;
-  line-height: 1.1;
-}
-
-/* botão WhatsApp no header */
-.header-whats {
-  background: rgba(0,0,0,.15);
-  color: #fff;
-  padding: 8px 14px;
-  border-radius: 999px;
-  font-weight: 700;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.header-whats:hover {
-  background: rgba(0,0,0,.25);
+  z-index: 1000;
 }
 
 /* =====================================================
@@ -106,18 +58,16 @@ body {
   padding: 12px;
   overflow-x: auto;
   background: var(--card);
-  -webkit-overflow-scrolling: touch;
 }
 
 .categories button {
-  background: transparent;
   border: 2px solid var(--primary);
+  background: transparent;
   color: var(--primary);
-  padding: 10px 18px;
+  padding: 8px 16px;
   border-radius: 999px;
   font-weight: 700;
   cursor: pointer;
-  white-space: nowrap;
 }
 
 .categories button.active {
@@ -140,9 +90,6 @@ body {
   border-radius: var(--radius);
   padding: 14px;
   box-shadow: var(--shadow-soft);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
 
 .product-card img {
@@ -153,106 +100,54 @@ body {
 }
 
 /* =====================================================
-   GRID TAMANHOS
-===================================================== */
-.size-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-top: 12px;
-}
-
-/* =====================================================
    BOTÕES
 ===================================================== */
 .btn {
   width: 100%;
-  padding: 14px;
+  padding: 12px;
   border-radius: 14px;
   font-size: 16px;
   font-weight: 700;
-  margin: 8px 0;
-  background: var(--primary);
-  color: #fff;
   border: none;
   cursor: pointer;
 }
 
-.btn-green { background: var(--green); }
+.btn-green {
+  background: var(--green);
+  color: #fff;
+}
 
 .btn-ghost {
   background: transparent;
   color: var(--muted);
-  border: 1px solid rgba(0,0,0,.1);
+  border: 1px solid #ddd;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* =====================================================
-   MODAL / PROMO
+   MODAL
 ===================================================== */
 .promo-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.65);
+  background: rgba(0,0,0,.6);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
-  padding: 20px;
+  z-index: 2000;
 }
 
 .promo-card {
   background: var(--card);
-  border-radius: 18px;
+  border-radius: var(--radius);
   width: 100%;
   max-width: 420px;
   padding: 16px;
   box-shadow: var(--shadow-strong);
-  max-height: calc(100vh - 80px);
-  overflow-y: auto;
-}
-
-/* imagem da promo */
-.promo-card img {
-  width: 100%;
-  max-height: 220px;
-  object-fit: cover;
-  border-radius: 14px;
-  display: block;
-  margin-bottom: 12px;
-}
-
-@media (max-width: 480px) {
-  .promo-card img {
-    max-height: 180px;
-  }
-}
-
-/* =====================================================
-   CONTADOR PROMO
-===================================================== */
-.promo-timer {
-  background: linear-gradient(135deg, #ff3b3b, #b30000);
-  color: #fff;
-  border-radius: 14px;
-  padding: 12px;
-  margin: 10px 0 14px;
-  text-align: center;
-  font-weight: 800;
-}
-
-.promo-timer span {
-  min-width: 44px;
-  font-size: 20px;
-}
-
-.promo-timer.blink {
-  animation: blinkUrgency 1s infinite;
-}
-
-@keyframes blinkUrgency {
-  0% { opacity: 1 }
-  50% { opacity: .6 }
-  100% { opacity: 1 }
 }
 
 /* =====================================================
@@ -260,7 +155,7 @@ body {
 ===================================================== */
 .cart {
   position: fixed;
-  bottom: calc(80px + env(safe-area-inset-bottom));
+  bottom: 80px;
   right: 16px;
   background: var(--card);
   border-radius: var(--radius);
@@ -268,23 +163,54 @@ body {
   width: 320px;
   max-width: calc(100% - 32px);
   box-shadow: var(--shadow-strong);
-  z-index: 950;
+  z-index: 1200;
 }
 
-/* =====================================================
-   BOTÃO FLUTUANTE
-===================================================== */
 .whats-float {
   position: fixed;
-  bottom: calc(12px + env(safe-area-inset-bottom));
+  bottom: 16px;
   right: 16px;
   background: var(--green);
   color: #fff;
-  padding: 12px 18px;
+  padding: 14px 18px;
   border-radius: 999px;
   font-weight: 700;
   box-shadow: var(--shadow-soft);
-  z-index: 1000;
+  z-index: 1300;
+}
+
+/* =====================================================
+   FORMULÁRIOS (SITE + ADMIN)
+===================================================== */
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  margin-bottom: 10px;
+  font-size: 15px;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+/* =====================================================
+   ADMIN
+===================================================== */
+.admin-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-soft);
+}
+
+.admin-card h3 {
+  margin-top: 0;
 }
 
 /* =====================================================
