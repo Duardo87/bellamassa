@@ -1,178 +1,78 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <title>Admin • Bella Massa</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <!-- CSS GLOBAL -->
+  <meta charset="UTF-8">
+  <title>Admin • Cardápio</title>
   <link rel="stylesheet" href="styles.css">
+</head>
 
-  <style>
-   <body>
-  <div id="login">
-    <input id="loginUser" placeholder="Usuário">
-    <input id="loginPass" type="password" placeholder="Senha">
-    <button onclick="login()">Entrar</button>
-  </div>
+<body>
 
-  <div id="admin" class="hidden">
-    <h2>🏪 Loja</h2>
-    <input id="storeName" placeholder="Nome da loja">
-    <input id="storePhone" placeholder="WhatsApp">
-    <input id="openTime" type="time">
-    <input id="closeTime" type="time">
-    <button onclick="saveStore()">Salvar loja</button>
-
-    <h2>📂 Categorias</h2>
-    <input id="catName" placeholder="Nova categoria">
-    <button onclick="addCategory()">Adicionar</button>
-    <div id="catList"></div>
-
-    <h2>🍕 Produtos</h2>
-    <input id="prodName" placeholder="Nome">
-    <input id="prodDesc" placeholder="Descrição">
-    <select id="prodCat"></select>
-    <input id="priceP" placeholder="Preço P">
-    <input id="priceM" placeholder="Preço M">
-    <input id="priceG" placeholder="Preço G">
-    <input id="prodFlavors" placeholder="Máx sabores">
-    <button onclick="addProduct()">Adicionar produto</button>
-    <div id="productList"></div>
-
-    <h2>➕ Adicionais</h2>
-    <input id="extraName" placeholder="Nome">
-    <input id="extraPrice" placeholder="Preço">
-    <button onclick="simpleList('extras',extraName.value,extraPrice.value)">Adicionar</button>
-    <div id="extraList"></div>
-
-    <h2>🥖 Bordas</h2>
-    <input id="borderName" placeholder="Nome">
-    <input id="borderPrice" placeholder="Preço">
-    <button onclick="simpleList('borders',borderName.value,borderPrice.value)">Adicionar</button>
-    <div id="borderList"></div>
-
-    <h2>🔥 Promoções</h2>
-    <div id="promoWeek"></div>
-
-    <button onclick="exportAppJSON()">⬇ Exportar app.json</button>
-  </div>
-
-  <script src="admin.js"></script>
-</body>
-<!-- ================= LOGIN ================= -->
-<section id="login" style="padding:20px;max-width:420px;margin:auto">
-  <h2>🔐 Login Admin</h2>
+<!-- LOGIN -->
+<div id="login">
+  <h2>Login Admin</h2>
   <input id="loginUser" placeholder="Usuário">
   <input id="loginPass" type="password" placeholder="Senha">
-  <button class="btn btn-green" onclick="login()">Entrar</button>
-</section>
+  <button onclick="login()">Entrar</button>
+</div>
 
-<!-- ================= ADMIN ================= -->
-<section id="admin" class="hidden" style="padding:20px;max-width:900px;margin:auto">
+<!-- ADMIN -->
+<div id="admin" class="hidden">
 
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-    <h2>⚙️ Painel Administrativo</h2>
-    <button class="btn btn-ghost" onclick="logout()">Sair</button>
-  </div>
+  <h2>🏪 Dados da Loja</h2>
+  <input id="storeName" placeholder="Nome da loja">
+  <input id="storePhone" placeholder="WhatsApp">
+  <input id="openTime" type="time">
+  <input id="closeTime" type="time">
+  <button onclick="saveStore()">Salvar loja</button>
 
-  <!-- ================= LOJA ================= -->
-  <div class="admin-card">
-    <h3>🏪 Dados da Loja</h3>
-    <input id="storeName" placeholder="Nome da loja">
-    <input id="storePhone" placeholder="WhatsApp (DDD + número)">
-    <button class="btn btn-green" onclick="saveStore()">Salvar</button>
-  </div>
+  <hr>
 
-  <!-- ================= HORÁRIO ================= -->
-  <div class="admin-card">
-    <h3>⏰ Horário de Funcionamento</h3>
-    <label>Abertura</label>
-    <input id="openTime" type="time">
-    <label>Fechamento</label>
-    <input id="closeTime" type="time">
-    <button class="btn btn-green" onclick="saveHours()">Salvar Horário</button>
-  </div>
+  <h2>📂 Categorias</h2>
+  <input id="catName" placeholder="Nova categoria">
+  <button onclick="addCategory()">Adicionar</button>
+  <div id="catList"></div>
 
-  <!-- ================= CATEGORIAS ================= -->
-  <div class="admin-card">
-    <h3>📂 Categorias</h3>
-    <input id="catName" placeholder="Nova categoria">
-    <button class="btn btn-green" onclick="addCategory()">Adicionar</button>
-    <hr>
-    <div id="catList"></div>
-  </div>
+  <hr>
 
-  <!-- ================= PRODUTOS ================= -->
-  <div class="admin-card">
-    <h3>🍕 Produtos</h3>
+  <h2>🍕 Produtos</h2>
+  <input id="prodName" placeholder="Nome do produto">
+  <input id="prodDesc" placeholder="Descrição">
+  <select id="prodCat"></select>
+  <input id="priceP" placeholder="Preço P">
+  <input id="priceM" placeholder="Preço M">
+  <input id="priceG" placeholder="Preço G">
+  <input id="prodFlavors" placeholder="Máx sabores">
+  <button onclick="addProduct()">Adicionar produto</button>
+  <div id="productList"></div>
 
-    <input id="prodName" placeholder="Nome do produto">
-    <input id="prodDesc" placeholder="Descrição">
-    <select id="prodCat"></select>
-    <input id="prodFlavors" type="number" placeholder="Máx. sabores">
+  <hr>
 
-    <h4>💰 Preços por tamanho</h4>
-    <input id="priceP" type="number" placeholder="Pequena">
-    <input id="priceM" type="number" placeholder="Média">
-    <input id="priceG" type="number" placeholder="Grande">
+  <h2>➕ Adicionais</h2>
+  <input id="extraName" placeholder="Nome">
+  <input id="extraPrice" placeholder="Preço">
+  <button onclick="addExtra()">Adicionar adicional</button>
+  <div id="extraList"></div>
 
-    <input id="prodImage" type="file">
+  <hr>
 
-    <button class="btn btn-green" onclick="addProduct()">Adicionar Produto</button>
+  <h2>🥖 Bordas</h2>
+  <input id="borderName" placeholder="Nome">
+  <input id="borderPrice" placeholder="Preço">
+  <button onclick="addBorder()">Adicionar borda</button>
+  <div id="borderList"></div>
 
-    <hr>
-    <div id="productList"></div>
-  </div>
+  <hr>
 
-  <!-- ================= ADICIONAIS ================= -->
-  <div class="admin-card">
-    <h3>➕ Adicionais</h3>
-    <input id="extraName" placeholder="Nome do adicional">
-    <input id="extraPrice" type="number" placeholder="Preço">
-    <button class="btn btn-green" onclick="addExtra()">Adicionar</button>
-    <hr>
-    <div id="extraList"></div>
-  </div>
+  <h2>🔥 Promoção por Dia da Semana</h2>
+  <div id="promoWeek"></div>
 
-  <!-- ================= BORDAS ================= -->
-  <div class="admin-card">
-    <h3>🥖 Bordas</h3>
-    <input id="borderName" placeholder="Nome da borda">
-    <input id="borderPrice" type="number" placeholder="Preço">
-    <button class="btn btn-green" onclick="addBorder()">Adicionar</button>
-    <hr>
-    <div id="borderList"></div>
-  </div>
+  <hr>
 
-  <!-- ================= PROMOÇÃO ================= -->
-  <div class="admin-card">
-    <h3>🔥 Promoção do Dia</h3>
+  <button onclick="exportAppJSON()">⬇ Exportar app.json</button>
 
-    <p>
-      <strong>Status:</strong>
-      <span id="promoStatus">PAUSADA</span>
-    </p>
+</div>
 
-    <input id="promoDesc" placeholder="Descrição da promoção">
-    <input id="promoPrice" type="number" placeholder="Preço">
-
-    <div class="admin-actions">
-      <button class="btn btn-green" onclick="savePromo()">Salvar</button>
-      <button class="btn btn-ghost" onclick="togglePromo()">Ativar / Pausar</button>
-    </div>
-  </div>
-<button class="btn btn-green" onclick="exportAppJSON()">
-  ⬇️ Gerar app.json
-</button>
-  <!-- ================= PEDIDOS ================= -->
-  <div class="admin-card">
-    <h3>📊 Resumo de Pedidos</h3>
-    <div id="ordersSummary"></div>
-  </div>
-
-</section>
-
-<script src="admin.js" defer></script>
+<script src="admin.js"></script>
 </body>
 </html>
