@@ -8,15 +8,11 @@ async function loadData(){
 
 document.addEventListener("DOMContentLoaded",async()=>{
   data=await loadData();
-  renderHeader();renderCategories();
-});
-
-function renderHeader(){
   document.getElementById("store-name").textContent=data.store.name;
   document.getElementById("store-phone").href=`https://wa.me/${data.store.phone}`;
-}
+});
 
-/* (seu fluxo de pedido continua igual) */
+/* (fluxo do pedido permanece igual ao seu atual) */
 
 function renderCart(){
   let total=0;
