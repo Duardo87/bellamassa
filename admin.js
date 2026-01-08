@@ -10,15 +10,19 @@ const $ = id => document.getElementById(id);
 // DEFAULT DATA
 // ==================================================
 const DEFAULT_DATA = {
-  store: { name: "", phone: "" },
+  store: { name: "", phone: "", open: "", close: "" },
+  categories: [],
+  products: [],
+  extras: [],
+  borders: [],
   promoWeek: {
-    0: { active:false, title:"", price:0, image:null }, // Domingo
-    1: { active:false, title:"", price:0, image:null }, // Segunda
-    2: { active:false, title:"", price:0, image:null },
-    3: { active:false, title:"", price:0, image:null },
-    4: { active:false, title:"", price:0, image:null },
-    5: { active:false, title:"", price:0, image:null }, // Sexta
-    6: { active:false, title:"", price:0, image:null }  // Sábado
+    0:{active:false,title:"",price:0,image:null},
+    1:{active:false,title:"",price:0,image:null},
+    2:{active:false,title:"",price:0,image:null},
+    3:{active:false,title:"",price:0,image:null},
+    4:{active:false,title:"",price:0,image:null},
+    5:{active:false,title:"",price:0,image:null},
+    6:{active:false,title:"",price:0,image:null}
   }
 };
 
@@ -32,7 +36,11 @@ function login() {
   $("admin").classList.remove("hidden");
   loadAdmin();
 }
+function logout(){ location.reload(); }
 
+// ==================================================
+// STORAGE
+// ==================================================
 function loadDB() {
   try {
     return { ...DEFAULT_DATA, ...JSON.parse(localStorage.getItem(KEY)) };
@@ -40,71 +48,168 @@ function loadDB() {
     return structuredClone(DEFAULT_DATA);
   }
 }
-
-function saveDB(d) {
-  localStorage.setItem(KEY, JSON.stringify(d));
-}
+function saveDB(d){ localStorage.setItem(KEY, JSON.stringify(d)); }
 
 // ==================================================
 // INIT
 // ==================================================
 function loadAdmin() {
   const d = loadDB();
+  $("storeName").value = d.store.name;
+  $("storePhone").value = d.store.phone;
+  $("openTime").value = d.store.open;
+  $("closeTime").value = d.store.close;
+  renderCategories();
+  renderProducts();
+  renderExtras();
+  renderBorders();
   renderPromoWeek();
 }
 
 // ==================================================
-// PROMOÇÃO POR DIA
+// STORE
 // ==================================================
-function renderPromoWeek() {
+function saveStore(){
   const d = loadDB();
-  const days = ["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
-
-  $("promoWeek").innerHTML = days.map((day,i)=>{
-    const p = d.promoWeek[i];
-    return `
-      <div class="admin-card">
-        <h3>${day}</h3>
-
-        <label>
-          <input type="checkbox" ${p.active?"checked":""}
-            onchange="togglePromoDay(${i},this.checked)">
-          Promo ativa
-        </label>
-
-        <input placeholder="Descrição"
-          value="${p.title}"
-          onchange="updatePromoDay(${i},'title',this.value)">
-
-        <input type="number" placeholder="Preço"
-          value="${p.price}"
-          onchange="updatePromoDay(${i},'price',this.value)">
-
-        <input type="file" accept="image/*"
-          onchange="updatePromoImage(${i},this.files[0])">
-      </div>
-    `;
-  }).join("");
-}
-
-function togglePromoDay(day, val) {
-  const d = loadDB();
-  d.promoWeek[day].active = val;
+  d.store.name = $("storeName").value.trim();
+  d.store.phone = $("storePhone").value.replace(/\D/g,"");
   saveDB(d);
+  alert("Dados da loja salvos");
 }
-
-function updatePromoDay(day, field, val) {
+function saveHours(){
   const d = loadDB();
-  d.promoWeek[day][field] = field === "price" ? Number(val) : val;
+  d.store.open = $("openTime").value;
+  d.store.close = $("closeTime").value;
   saveDB(d);
+  alert("Horário salvo");
 }
 
-function updatePromoImage(day, file) {
-  if (!file) return;
+// ==================================================
+// CATEGORIES
+// ==================================================
+function addCategory(){
   const d = loadDB();
-  const r = new FileReader();
-  r.onload = () => {
-    d.promoWeek[day].image = r.result;
+  if(!$("catName").value.trim()) return;
+  d.categories.push($("catName").value.trim());
+  $("catName").value="";
+  saveDB(d);
+  renderCategories();
+}
+function renderCategories(){
+  const d = loadDB();
+  $("catList").innerHTML = d.categories.map((c,i)=>`
+    <div>${c} <button onclick="deleteCategory(${i})">🗑</button></div>
+  `).join("");
+  $("prodCat").innerHTML =
+    `<option value="">Selecione</option>`+
+    d.categories.map(c=>`<option>${c}</option>`).join("");
+}
+function deleteCategory(i){
+  const d = loadDB();
+  d.categories.splice(i,1);
+  saveDB(d);
+  renderCategories();
+}
+
+// ==================================================
+// PRODUCTS
+// ==================================================
+function addProduct(){
+  const d = loadDB();
+  const prices={
+    P:Number($("priceP").value)||null,
+    M:Number($("priceM").value)||null,
+    G:Number($("priceG").value)||null
+  };
+  if(!prices.P && !prices.M && !prices.G)
+    return alert("Informe ao menos um preço");
+  d.products.push({
+    id:Date.now(),
+    name:$("prodName").value,
+    desc:$("prodDesc").value,
+    category:$("prodCat").value,
+    maxFlavors:Number($("prodFlavors").value)||2,
+    prices,
+    active:true
+  });
+  saveDB(d);
+  renderProducts();
+}
+function renderProducts(){
+  const d = loadDB();
+  $("productList").innerHTML = d.products.map(p=>`
+    <div>${p.name}
+      <button onclick="toggleProduct(${p.id})">${p.active?"⏸":"▶️"}</button>
+    </div>
+  `).join("");
+}
+function toggleProduct(id){
+  const d = loadDB();
+  const p=d.products.find(x=>x.id===id);
+  p.active=!p.active;
+  saveDB(d);
+  renderProducts();
+}
+
+// ==================================================
+// EXTRAS
+// ==================================================
+function addExtra(){
+  const d = loadDB();
+  d.extras.push({id:Date.now(),name:$("extraName").value,price:Number($("extraPrice").value),active:true});
+  saveDB(d);
+  renderExtras();
+}
+function renderExtras(){
+  const d = loadDB();
+  $("extraList").innerHTML=d.extras.map(e=>`<div>${e.name}</div>`).join("");
+}
+
+// ==================================================
+// BORDERS
+// ==================================================
+function addBorder(){
+  const d = loadDB();
+  d.borders.push({id:Date.now(),name:$("borderName").value,price:Number($("borderPrice").value),active:true});
+  saveDB(d);
+  renderBorders();
+}
+function renderBorders(){
+  const d = loadDB();
+  $("borderList").innerHTML=d.borders.map(b=>`<div>${b.name}</div>`).join("");
+}
+
+// ==================================================
+// PROMO POR DIA
+// ==================================================
+function renderPromoWeek(){
+  const d=loadDB();
+  const days=["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
+  $("promoWeek").innerHTML=days.map((day,i)=>`
+    <div class="admin-card">
+      <h3>${day}</h3>
+      <label><input type="checkbox" ${d.promoWeek[i].active?"checked":""}
+        onchange="togglePromoDay(${i},this.checked)"> Ativa</label>
+      <input value="${d.promoWeek[i].title}"
+        onchange="updatePromoDay(${i},'title',this.value)" placeholder="Descrição">
+      <input type="number" value="${d.promoWeek[i].price}"
+        onchange="updatePromoDay(${i},'price',this.value)" placeholder="Preço">
+      <input type="file" onchange="updatePromoImage(${i},this.files[0])">
+    </div>
+  `).join("");
+}
+function togglePromoDay(i,val){
+  const d=loadDB(); d.promoWeek[i].active=val; saveDB(d);
+}
+function updatePromoDay(i,f,v){
+  const d=loadDB(); d.promoWeek[i][f]=f==="price"?Number(v):v; saveDB(d);
+}
+function updatePromoImage(i,file){
+  if(!file) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    const d=loadDB();
+    d.promoWeek[i].image=r.result;
     saveDB(d);
   };
   r.readAsDataURL(file);
