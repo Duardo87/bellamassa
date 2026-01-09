@@ -1,278 +1,177 @@
-// ================= CONFIG =================
-const WHATS_PHONE = "5562993343622";
+let data=null, cart=[], currentProduct=null;
+let step=1, selection={size:null,flavors:[],border:null,extras:[]};
+const $=id=>document.getElementById(id);
 
-let data = null;
-let cart = [];
-
-// ================= LOAD DATA =================
-async function loadData() {
-  try {
-    const res = await fetch("./app.json?v=" + Date.now());
-    return await res.json();
-  } catch (e) {
-    console.error("Erro ao carregar app.json", e);
-    return {};
-  }
+async function loadData(){
+  const res=await fetch("./app.json?v="+Date.now());
+  return res.json();
 }
 
-// ================= INIT =================
-document.addEventListener("DOMContentLoaded", async () => {
-  data = await loadData();
-  renderHeader();
+document.addEventListener("DOMContentLoaded",async()=>{
+  data=await loadData();
+  $("storeName").textContent=data.store.name;
+  $("storePhone").href=`https://wa.me/${data.store.phone}`;
+  $("whatsFloat").href=`https://wa.me/${data.store.phone}`;
+  $("btnCart").onclick=()=>toggleCart();
   renderCategories();
-  showPromoOfDay();
 });
 
-// ================= HEADER =================
-function renderHeader() {
-  document.getElementById("store-name").textContent = data.store.name;
-  document.getElementById("store-phone").href =
-    `https://wa.me/${data.store.phone}`;
-}
-// ================= PROMOÇÃO =================
-function showPromoOfDay() {
-  if (!data.promoWeek) return;
-  const day = new Date().getDay();
-  const promo = data.promoWeek[day];
-  if (!promo || !promo.active) return;
-
-  openModal(`
-    <h2>🔥 ${promo.title}</h2>
-    ${promo.image ? `<img src="${promo.image}" style="width:100%;border-radius:10px">` : ""}
-    <strong>R$ ${promo.price.toFixed(2)}</strong>
-    <button class="btn btn-green" onclick="addPromo('${promo.title}',${promo.price})">
-      Adicionar ao pedido
-    </button>
-    <button class="btn btn-ghost" onclick="closeModal()">Fechar</button>
-  `);
-}
-
-function addPromo(name, price) {
-  cart.push({ name, price });
-  closeModal();
-  renderCart();
-}
-
-// ================= CATEGORIAS =================
-function renderCategories() {
-  const nav = document.getElementById("categories");
-  nav.innerHTML = "";
-
-  const cats = data.categories
-    .filter(c => c.active)
-    .sort((a, b) => a.order - b.order);
-
-  cats.forEach((c, i) => {
-    nav.innerHTML += `
-      <button class="${i === 0 ? "active" : ""}" onclick="renderProducts(${c.id}, this)">
-        ${c.name}
-      </button>
-    `;
+function renderCategories(){
+  const cats=data.categories.filter(c=>c.active).sort((a,b)=>a.order-b.order);
+  $("categories").innerHTML="";
+  cats.forEach((c,i)=>{
+    $("categories").innerHTML+=
+      `<button class="${i===0?'active':''}" onclick="renderProducts(${c.id},this)">${c.name}</button>`;
   });
-
-  if (cats.length) renderProducts(cats[0].id);
+  if(cats.length) renderProducts(cats[0].id);
 }
 
-// ================= PRODUTOS =================
-function renderProducts(categoryId, btn) {
-  document.querySelectorAll("#categories button")
-    .forEach(b => b.classList.remove("active"));
-  if (btn) btn.classList.add("active");
+function renderProducts(catId,btn){
+  document.querySelectorAll(".categories button").forEach(b=>b.classList.remove("active"));
+  if(btn) btn.classList.add("active");
+  $("products").innerHTML="";
+  data.products.filter(p=>p.active && p.categoryId===catId).forEach(p=>{
+    $("products").innerHTML+=`
+      <div class="product-card">
+        <h3>${p.name}</h3>
+        <p>${p.desc||""}</p>
+        <button onclick="startOrder(${p.id})">Escolher</button>
+      </div>`;
+  });
+}
 
-  const grid = document.getElementById("products");
-  grid.innerHTML = "";
+/* ===== WIZARD ===== */
+function startOrder(id){
+  currentProduct=data.products.find(p=>p.id===id);
+  step=1;
+  selection={size:null,flavors:[],border:null,extras:[]};
+  $("modal").classList.remove("hidden");
+  renderStep();
+}
 
-  data.products
-    .filter(p => p.active && p.categoryId === categoryId)
-    .sort((a, b) => a.order - b.order)
-    .forEach(p => {
-      grid.innerHTML += `
-        <div class="product-card">
-          ${p.image ? `<img src="${p.image}">` : ""}
-          <h3>${p.name}</h3>
-          <p>${p.desc || ""}</p>
-          <button onclick="startOrder(${p.id})">Adicionar</button>
-        </div>
-      `;
+$("prevStep").onclick=()=>{ if(step>1){ step--; renderStep(); }};
+$("nextStep").onclick=()=>nextStep();
+
+function renderStep(){
+  if(step===1) stepSize();
+  if(step===2) stepFlavors();
+  if(step===3) stepBorder();
+  if(step===4) stepExtras();
+}
+
+function stepSize(){
+  $("stepTitle").innerHTML="📏 Tamanho";
+  let html="";
+  Object.entries(currentProduct.prices).forEach(([k,v])=>{
+    html+=`<label><input type="radio" name="size" value="${k}" data-price="${v}"> ${k} - R$ ${v}</label><br>`;
+  });
+  $("stepContent").innerHTML=html;
+}
+
+function stepFlavors(){
+  if(!currentProduct.maxFlavors || currentProduct.maxFlavors===1){
+    step++; renderStep(); return;
+  }
+  $("stepTitle").innerHTML=`🍕 Escolha até ${currentProduct.maxFlavors} sabores`;
+  let html="";
+  data.products.filter(p=>p.categoryId===currentProduct.categoryId && p.prices)
+    .forEach(p=>{
+      html+=`<label><input type="checkbox" value="${p.name}" data-prices='${JSON.stringify(p.prices)}'> ${p.name}</label><br>`;
     });
+  $("stepContent").innerHTML=html;
 }
 
-// ================= FLUXO DO PEDIDO =================
-let currentProduct = null;
-let selectedFlavors = [];
-let selectedSize = null;
-let selectedBorder = null;
-let selectedExtras = [];
-
-function startOrder(id) {
-  currentProduct = data.products.find(p => p.id === id);
-  selectedFlavors = [];
-  selectedSize = null;
-  selectedBorder = null;
-  selectedExtras = [];
-  chooseFlavors();
+function stepBorder(){
+  $("stepTitle").innerHTML="🥖 Borda (opcional)";
+  let html="";
+  (data.borders||[]).filter(b=>b.active).forEach(b=>{
+    html+=`<label><input type="radio" name="border" value="${b.name}" data-price="${b.price}"> ${b.name} (+R$ ${b.price})</label><br>`;
+  });
+  $("stepContent").innerHTML=html;
 }
 
-// -------- SABORES --------
-function chooseFlavors() {
-  openModal(`
-    <h3>Escolha até ${currentProduct.maxFlavors} sabores</h3>
-    ${data.products
-      .filter(p => p.active && p.categoryId === currentProduct.categoryId)
-      .map(p => `
-        <label>
-          <input type="checkbox" value="${p.name}">
-          ${p.name}
-        </label>
-      `).join("")}
-    <button onclick="confirmFlavors()">Continuar</button>
-  `);
+function stepExtras(){
+  $("stepTitle").innerHTML="➕ Adicionais";
+  let html="";
+  (data.extras||[]).filter(e=>e.active).forEach(e=>{
+    html+=`<label><input type="checkbox" value="${e.name}" data-price="${e.price}"> ${e.name} (+R$ ${e.price})</label><br>`;
+  });
+  $("stepContent").innerHTML=html;
+  $("nextStep").textContent="Adicionar ao carrinho";
 }
 
-function confirmFlavors() {
-  selectedFlavors = [...document.querySelectorAll(".promo-card input:checked")]
-    .map(i => i.value);
-
-  if (!selectedFlavors.length || selectedFlavors.length > currentProduct.maxFlavors) {
-    alert("Quantidade de sabores inválida");
-    return;
+function nextStep(){
+  if(step===1){
+    const s=document.querySelector("input[name=size]:checked");
+    if(!s){alert("Escolha o tamanho");return;}
+    selection.size=s;
   }
-  chooseSize();
+  if(step===2 && currentProduct.maxFlavors>1){
+    const f=[...$("stepContent").querySelectorAll("input:checked")];
+    if(!f.length){alert("Escolha ao menos 1 sabor");return;}
+    if(f.length>currentProduct.maxFlavors){alert("Excedeu o limite");return;}
+    selection.flavors=f;
+  }
+  if(step===3){
+    selection.border=document.querySelector("input[name=border]:checked");
+  }
+  if(step===4){
+    selection.extras=[...$("stepContent").querySelectorAll("input:checked")];
+    finalizeItem(); return;
+  }
+  step++; renderStep();
 }
 
-// -------- TAMANHOS --------
-function chooseSize() {
-  const p = currentProduct.prices;
-  openModal(`
-    <button onclick="chooseFlavors()">⬅ Voltar</button>
-    <h3>Escolha o tamanho</h3>
-    ${p.P ? `<button onclick="setSize('P',${p.P})">Pequena • R$ ${p.P}</button>` : ""}
-    ${p.M ? `<button onclick="setSize('M',${p.M})">Média • R$ ${p.M}</button>` : ""}
-    ${p.G ? `<button onclick="setSize('G',${p.G})">Grande • R$ ${p.G}</button>` : ""}
-  `);
-}
+function finalizeItem(){
+  let total=Number(selection.size.dataset.price);
+  let desc=currentProduct.name+" ("+selection.size.value+")";
 
-function setSize(label, price) {
-  selectedSize = { label, price };
-  chooseBorder();
-}
-
-// -------- BORDAS --------
-function chooseBorder() {
-  openModal(`
-    <button onclick="chooseSize()">⬅ Voltar</button>
-    <h3>Borda</h3>
-    <button onclick="setBorder(null)">Sem borda</button>
-    ${data.borders
-      .filter(b => b.active)
-      .sort((a,b)=>a.order-b.order)
-      .map(b => `
-        <button onclick="setBorder(${b.id})">
-          ${b.name} + R$ ${b.price}
-        </button>
-      `).join("")}
-  `);
-}
-
-function setBorder(id) {
-  selectedBorder = id;
-  chooseExtras();
-}
-
-// -------- EXTRAS --------
-function chooseExtras() {
-  openModal(`
-    <button onclick="chooseBorder()">⬅ Voltar</button>
-    <h3>Adicionais</h3>
-    ${data.extras
-      .filter(e => e.active)
-      .sort((a,b)=>a.order-b.order)
-      .map(e => `
-        <label>
-          <input type="checkbox" value="${e.id}">
-          ${e.name} + R$ ${e.price}
-        </label>
-      `).join("")}
-    <button onclick="finishOrder()">Adicionar ao pedido</button>
-  `);
-}
-
-// -------- FINAL --------
-function finishOrder() {
-  selectedExtras = [...document.querySelectorAll(".promo-card input:checked")]
-    .map(i => data.extras.find(e => e.id == i.value));
-
-  let total = selectedSize.price;
-  let desc = `${currentProduct.name} (${selectedFlavors.join("/")}) - ${selectedSize.label}`;
-
-  if (selectedBorder) {
-    const b = data.borders.find(x => x.id === selectedBorder);
-    total += b.price;
-    desc += ` | Borda: ${b.name}`;
+  if(selection.flavors.length){
+    let max=0;
+    selection.flavors.forEach(f=>{
+      const p=JSON.parse(f.dataset.prices)[selection.size.value]||0;
+      max=Math.max(max,p);
+    });
+    total=max;
+    desc+=" – "+selection.flavors.map(f=>f.value).join(" + ");
   }
 
-  selectedExtras.forEach(e => {
-    total += e.price;
-    desc += ` | Extra: ${e.name}`;
+  if(selection.border){
+    total+=Number(selection.border.dataset.price);
+    desc+=" + Borda "+selection.border.value;
+  }
+
+  selection.extras.forEach(e=>{
+    total+=Number(e.dataset.price);
+    desc+=" + "+e.value;
   });
 
-  cart.push({ name: desc, price: total });
-  closeModal();
+  cart.push({desc,total});
+  $("modal").classList.add("hidden");
+  $("nextStep").textContent="Continuar";
   renderCart();
 }
 
-// ================= CARRINHO =================
-function renderCart() {
-const c = document.getElementById("cart");
-c.classList.remove("hidden");
-  let total = 0;
-  c.innerHTML = "<h3>Pedido</h3>";
-
-  cart.forEach((i, idx) => {
-    total += i.price;
-    c.innerHTML += `
-      <p>
-        ${i.name} - R$ ${i.price.toFixed(2)}
-        <button onclick="removeItem(${idx})">❌</button>
-      </p>
-    `;
+/* ===== CARRINHO ===== */
+function renderCart(){
+  $("cartBox").innerHTML="<h3>Pedido</h3>";
+  let t=0;
+  cart.forEach((i,idx)=>{
+    t+=i.total;
+    $("cartBox").innerHTML+=
+      `<p>${i.desc} - R$ ${i.total.toFixed(2)}
+      <button onclick="cart.splice(${idx},1);renderCart()">❌</button></p>`;
   });
-
-  c.innerHTML += `
-    <textarea id="note" placeholder="Observações"></textarea>
-    <input id="address" placeholder="Endereço completo">
-    <select id="pay">
-      <option>Forma de pagamento</option>
-      <option>Dinheiro</option>
-      <option>Pix</option>
-      <option>Cartão</option>
-    </select>
-    <strong>Total: R$ ${total.toFixed(2)}</strong>
-    <button onclick="sendWhats()">Enviar WhatsApp</button>
-  `;
+  $("cartBox").innerHTML+=
+    `<strong>Total: R$ ${t.toFixed(2)}</strong>
+     <button onclick="sendWhats()">Enviar WhatsApp</button>`;
+  $("cartBox").classList.remove("hidden");
 }
 
-function removeItem(i) {
-  cart.splice(i, 1);
-  renderCart();
-}
+function toggleCart(){ $("cartBox").classList.toggle("hidden"); }
 
-// ================= WHATSAPP =================
-function sendWhats() {
-  let msg = `🧾 *Pedido*\n\n`;
-  cart.forEach(i => msg += `• ${i.name} — R$ ${i.price.toFixed(2)}\n`);
-  msg += `\n📝 Obs: ${note.value}\n📍 Endereço: ${address.value}\n💳 Pagamento: ${pay.value}`;
-  window.open(`https://wa.me/${WHATS_PHONE}?text=${encodeURIComponent(msg)}`);
-}
-
-// ================= MODAL =================
-function openModal(html) {
-  closeModal();
-  const d = document.createElement("div");
-  d.className = "promo-overlay";
-  d.innerHTML = `<div class="promo-card">${html}</div>`;
-  document.body.appendChild(d);
-}
-function closeModal() {
-  document.querySelectorAll(".promo-overlay").forEach(m => m.remove());
+function sendWhats(){
+  let msg="🧾 Pedido:%0A";
+  cart.forEach(i=>msg+=`- ${i.desc} R$ ${i.total.toFixed(2)}%0A`);
+  window.open(`https://wa.me/${data.store.phone}?text=${msg}`);
 }
