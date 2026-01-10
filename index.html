@@ -9,30 +9,31 @@
 <body>
 
 <header class="header">
-  <h1 id="storeName">Carregando…</h1>
+  <h1 id="storeName"></h1>
   <a id="storePhone" target="_blank">WhatsApp</a>
 </header>
+
+<section id="promoBanner" class="promo hidden">
+  <img id="promoImg">
+  <h2 id="promoTitle"></h2>
+  <p id="promoDesc"></p>
+  <strong id="promoPrice"></strong>
+  <small id="promoUrgency"></small>
+  <button id="promoBtn">🔥 Pedir promoção</button>
+</section>
 
 <nav id="categories" class="categories"></nav>
 <main id="products" class="products"></main>
 
 <button id="btnCart" class="btn-cart">🛒 Ver pedido</button>
-<aside id="cartBox" class="cart hidden"></aside>
 
-<!-- MODAL -->
-<div id="modal" class="modal hidden">
-  <div class="modal-content">
-    <div id="stepTitle"></div>
-    <div id="stepContent"></div>
+<aside id="cartBox" class="cart hidden">
+  <div id="cartItems"></div>
+  <strong id="cartTotal"></strong>
+  <button onclick="sendWhats()">Enviar WhatsApp</button>
+</aside>
 
-    <div class="step-actions">
-      <button id="prevStep">Voltar</button>
-      <button id="nextStep">Continuar</button>
-    </div>
-  </div>
-</div>
-
-<a id="whatsFloat" class="whats-float" target="_blank">💬 Pedir no WhatsApp</a>
+<a id="whatsFloat" class="whats-float" target="_blank">💬 WhatsApp</a>
 
 <script src="app.js"></script>
 </body>
